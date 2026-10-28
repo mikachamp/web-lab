@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gyro Winder Live</title>
+<meta name="description" content="Test of the 'live 3D' method on a product: a gyro watch winder built from code in real millimetres, lit by an in-scene studio and directed by the scroll.">
+<!-- Fonts are optional: offline, the system fallbacks in the CSS are used. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/src/style.css">
+</head><body>
+
+
+<main>
+  <canvas id="c" role="img" aria-label="A gyro watch winder rendered live in 3D: a brushed aluminium base, two posts, a polished steel outer ring and a brass inner ring carrying a watch on a leather cradle. Scrolling moves the camera, takes it apart and puts it back together."></canvas>
+  <div id="labels" aria-hidden="true"><svg></svg></div>
+  <div class="story">
+    <section data-cue="hero"><div class="copy">
+      <div class="k">gyro watch winder · live</div>
+      <h1>Built in code. Lit like a studio.</h1>
+      <p>No video and no model files. Every part is drawn from shapes in real millimetres, and your scroll directs the camera.</p>
+    </div></section>
+    <section data-cue="close" class="right"><div class="copy">
+      <div class="k">01 · Close-up</div>
+      <h2>Slow motion, for real.</h2>
+      <p>Here the clock runs at one twelfth speed. Nothing was filmed, so nothing needs extra frames.</p>
+    </div></section>
+    <section data-cue="apart" class="low"><div class="copy">
+      <div class="k">02 · Apart</div>
+      <h2>Seven parts, real sizes.</h2>
+      <p>Top parts leave first and come back last.</p>
+    </div></section>
+    <section data-cue="around" class="right"><div class="copy">
+      <div class="k">03 · Around</div>
+      <h2>Move the cursor, move the lights.</h2>
+      <p>The metal only reflects a small studio built inside the scene: one softbox, two strip lights. Turn it and every edge changes. Try Blueprint to see it is geometry.</p>
+    </div></section>
+    <section data-cue="back"><div class="copy">
+      <div class="k">04 · Back together</div>
+      <h2>Hold to power it up.</h2>
+      <p>The rings spin on one shared clock and each quarter turn ticks.</p>
+      <p class="note">Method test by Mika Williamson, after the "live 3D" build guide by Parallel Studios. Concept finishes, not production materials.</p>
+    </div></section>
+  </div>
+</main>
+<div class="ctl">
+  <button class="tog" id="bp" type="button" aria-pressed="false">Blueprint</button>
+  <button class="hold" id="hold" type="button" aria-label="Hold to power up"><svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="9" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="2.5"/><circle id="ring" cx="11" cy="11" r="9" fill="none" stroke="#ff9d42" stroke-width="2.5" stroke-dasharray="56.55" stroke-dashoffset="56.55" stroke-linecap="round"/></svg><span id="holdT">Hold to power</span></button>
+</div>
+<div id="nogl">3D is not available on this device. The text above and below still reads in full.</div>
+<div id="load">Compiling shaders…</div>
+
+<script type="module" src="/src/main.ts"></script>
+</body></html>

@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VESPERA — Haute Parfumerie & Olfactory House // Grasse</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  
+  <!-- Three.js r128 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <style>
+    :root {
+      --bg-plum: #140d16;
+      --bg-surface: rgba(28, 19, 29, 0.7);
+      --bg-surface-elevated: rgba(42, 28, 44, 0.85);
+      --amber-gold: #d48c46;
+      --amber-light: #f3c28a;
+      --cedar-dark: #231610;
+      --smoke-vapor: #d1d1d6;
+      --border-hairline: rgba(212, 140, 70, 0.15);
+      --border-accent: rgba(212, 140, 70, 0.35);
+      --text-primary: #fcf8f6;
+      --text-secondary: rgba(252, 248, 246, 0.65);
+      --text-muted: rgba(252, 248, 246, 0.38);
+      --radius-sm: 6px;
+      --radius-md: 12px;
+      --radius-lg: 24px;
+      --radius-pill: 9999px;
+      --transition-spring: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background-color: var(--bg-plum);
+      color: var(--text-primary);
+      font-family: 'Inter', -apple-system, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Ambient Botanical Scent Glow */
+    .ambient-scent-mesh {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background: radial-gradient(circle at 35% 30%, rgba(212, 140, 70, 0.12) 0%, transparent 60%),
+                  radial-gradient(circle at 75% 70%, rgba(138, 43, 226, 0.06) 0%, transparent 55%),
+                  radial-gradient(circle at 50% 50%, rgba(35, 22, 16, 0.8) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .grain-overlay {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.045;
+      mix-blend-mode: overlay;
+    }
+
+    /* Magnetic Cursor */
+    .cursor-ring {
+      position: fixed;
+      width: 32px;
+      height: 32px;
+      border: 1px solid rgba(212, 140, 70, 0.45);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 10000;
+      transform: translate(-50%, -50%);
+      will-change: transform;
+    }
+
+    .cursor-dot {
+      position: fixed;
+      width: 4px;
+      height: 4px;
+      background: var(--amber-light);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 10001;
+      transform: translate(-50%, -50%);
+      will-change: transform;
+    }
+
+    /* Floating Capsule Header */
+    header {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 64px);
+      max-width: 1320px;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 28px;
+      background: rgba(20, 13, 22, 0.75);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-hairline);
+      border-radius: var(--radius-pill);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .brand-mark-group {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .brand-monogram {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1px solid var(--amber-gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--amber-light);
+    }
+
+    .brand-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 21px;
+      letter-spacing: 0.22em;
+      font-weight: 400;
+      text-transform: uppercase;
+      color: var(--text-primary);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      list-style: none;
+    }
+
+    .nav-link {
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: color 0.25s ease;
+      position: relative;
+    }
+
+    .nav-link:hover {
+      color: var(--amber-light);
+    }
+
+    /* Switcher Dropdown */
+    .atelier-switcher {
+      position: relative;
+    }
+
+    .atelier-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-hairline);
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      color: var(--amber-light);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      cursor: pointer;
+    }
+
+    .atelier-menu {
+      position: absolute;
+      top: calc(100% + 12px);
+      right: 0;
+      width: 240px;
+      background: rgba(20, 13, 22, 0.96);
+      backdrop-filter: blur(24px);
+      border: 1px solid var(--border-hairline);
+      border-radius: var(--radius-md);
+      padding: 8px;
+      display: none;
+      flex-direction: column;
+      gap: 4px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+      z-index: 200;
+    }
+
+    .atelier-menu.active {
+      display: flex;
+    }
+
+    .atelier-item {
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      transition: all 0.2s ease;
+    }
+
+    .atelier-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
+    }
+
+    .atelier-item.current {
+      background: rgba(212, 140, 70, 0.15);
+      border-left: 2px solid var(--amber-gold);
+      color: var(--amber-light);
+    }
+
+    /* Hero Section */
+    .hero-section {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 140px 48px 60px;
+      max-width: 1440px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 10;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 60px;
+      align-items: center;
+      width: 100%;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      background: rgba(212, 140, 70, 0.1);
+      border: 1px solid var(--border-accent);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--amber-light);
+      margin-bottom: 24px;
+    }
+
+    .hero-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(48px, 6vw, 76px);
+      font-weight: 300;
+      line-height: 1.02;
+      letter-spacing: -0.01em;
+      color: var(--text-primary);
+      margin-bottom: 24px;
+    }
+
+    .hero-title em {
+      font-style: italic;
+      color: var(--amber-light);
+      font-weight: 400;
+    }
+
+    .hero-desc {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.8;
+      max-width: 520px;
+      font-weight: 300;
+      margin-bottom: 32px;
+    }
+
+    .btn-amber {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(135deg, var(--amber-gold), #8c4c1a);
+      color: #0d070e;
+      font-family: 'Inter', sans-serif;
+      font-size: 12.5px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 14px 32px;
+      border-radius: var(--radius-pill);
+      text-decoration: none;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(212, 140, 70, 0.3);
+      transition: all 0.3s var(--transition-spring);
+    }
+
+    .btn-amber:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 28px rgba(212, 140, 70, 0.5);
+      background: linear-gradient(135deg, var(--amber-light), var(--amber-gold));
+    }
+
+    /* 3D Perfume Flacon Viewport */
+    .flacon-stage-container {
+      position: relative;
+      width: 100%;
+      height: 580px;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .stage-hud-overlay {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      right: 20px;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .hud-chip {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      background: rgba(20, 13, 22, 0.7);
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-hairline);
+      backdrop-filter: blur(12px);
+      color: var(--amber-light);
+    }
+
+    /* Olfactory Telemetry Strip */
+    .telemetry-strip {
+      border-top: 1px solid var(--border-hairline);
+      border-bottom: 1px solid var(--border-hairline);
+      background: rgba(20, 13, 22, 0.6);
+      backdrop-filter: blur(16px);
+      padding: 36px 48px;
+      margin: 40px auto 100px;
+      max-width: 1440px;
+    }
+
+    .telemetry-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 32px;
+    }
+
+    .telemetry-metric {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      border-left: 1px solid var(--border-hairline);
+      padding-left: 24px;
+    }
+
+    .metric-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: clamp(24px, 2.5vw, 32px);
+      font-weight: 400;
+      color: var(--text-primary);
+    }
+
+    .metric-label {
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--amber-gold);
+    }
+
+    .metric-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* Interactive Olfactory Pyramid Section */
+    .pyramid-section {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 0 48px 120px;
+    }
+
+    .section-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.3em;
+      color: var(--amber-gold);
+      margin-bottom: 12px;
+    }
+
+    .section-headline {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(36px, 4vw, 56px);
+      font-weight: 300;
+      line-height: 1.05;
+      letter-spacing: -0.01em;
+      margin-bottom: 60px;
+      max-width: 720px;
+    }
+
+    .pyramid-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .pyramid-layer {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-hairline);
+      border-radius: var(--radius-md);
+      padding: 32px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.3s var(--transition-spring);
+    }
+
+    .pyramid-layer:hover, .pyramid-layer.active {
+      border-color: var(--amber-gold);
+      background: rgba(42, 28, 44, 0.8);
+      transform: translateY(-2px);
+    }
+
+    .layer-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 26px;
+      font-weight: 400;
+      color: var(--text-primary);
+    }
+
+    .layer-notes {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--amber-light);
+      letter-spacing: 0.1em;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border-hairline);
+      background: #0d070e;
+      padding: 80px 48px 40px;
+      max-width: 1440px;
+      margin: 0 auto;
+    }
+
+    .footer-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 32px;
+      border-top: 1px solid var(--border-hairline);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+  
+@media (max-width: 860px) {
+  html, body { overflow-x: hidden !important; width: 100% !important; max-width: 100% !important; }
+  header { padding: 14px 20px !important; box-sizing: border-box !important; width: 100% !important; }
+  .nav-links { display: none !important; }
+  .hero-section { padding: 90px 20px 40px !important; min-height: auto !important; box-sizing: border-box !important; width: 100% !important; }
+  .hero-grid { grid-template-columns: 1fr !important; gap: 32px !important; width: 100% !important; }
+  .hero-title { font-size: clamp(34px, 8vw, 48px) !important; }
+  .pavilion-stage-container, .timepiece-stage, .olfactory-stage, .stage-container, .sonder-stage { height: 340px !important; width: 100% !important; max-width: 100% !important; box-sizing: border-box !important; }
+  .stage-hud-overlay { top: 10px !important; left: 10px !important; right: 10px !important; }
+  .hud-chip { font-size: 9px !important; padding: 4px 8px !important; }
+  .solar-slider-bar { bottom: 10px !important; left: 10px !important; right: 10px !important; padding: 6px 12px !important; box-sizing: border-box !important; }
+  .solar-label { font-size: 9.5px !important; }
+  .telemetry-grid { grid-template-columns: 1fr 1fr !important; gap: 16px !important; width: 100% !important; }
+  .project-grid, .timepiece-grid, .craft-grid, .footer-grid { grid-template-columns: 1fr !important; gap: 24px !important; width: 100% !important; }
+  section, .container, .monograph-section, .collection-section, .craft-section, .pyramid-section, .studio-section { padding-inline: 20px !important; max-width: 100% !important; box-sizing: border-box !important; }
+  footer { padding: 36px 20px !important; box-sizing: border-box !important; width: 100% !important; }
+}
+
+</style>
+</head>
+<body>
+
+  <div class="ambient-scent-mesh"></div>
+
+  <svg class="grain-overlay">
+    <filter id="noise">
+      <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch" />
+    </filter>
+    <rect width="100%" height="100%" filter="url(#noise)" />
+  </svg>
+
+  <div class="cursor-ring" id="cursorRing"></div>
+  <div class="cursor-dot" id="cursorDot"></div>
+
+  <!-- Header -->
+  <header>
+    <a href="#" class="brand-mark-group">
+      <div class="brand-monogram">VP</div>
+      <div class="brand-name">VESPERA</div>
+    </a>
+
+    <ul class="nav-links">
+      <li><a href="#pyramid" class="nav-link">Olfactory Accords</a></li>
+      <li><a href="#distillation" class="nav-link">Extraction</a></li>
+      <li><a href="#harvest" class="nav-link">Harvest Registry</a></li>
+      <li><a href="#atelier" class="nav-link">Maison</a></li>
+    </ul>
+
+    <div class="atelier-switcher">
+      <button class="atelier-btn" id="atelierBtn">
+        <span>COLLECTIONS</span>
+        <svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.2"/></svg>
+      </button>
+
+      <div class="atelier-menu" id="atelierMenu">
+        <a href="nocturnal.html" class="atelier-item">
+          <span>Noc-Turnal</span>
+          <span>Haute Horlogerie Atelier</span>
+        </a>
+        <a href="aetheria.html" class="atelier-item">
+          <span>Aetheria</span>
+          <span>Spatial & Architecture</span>
+        </a>
+        <a href="vespera.html" class="atelier-item current">
+          <span>Vespera</span>
+          <span>Haute Parfumerie</span>
+        </a>
+        <a href="../animation-methodologies-lab/index.html" class="atelier-item">
+          <span>Benchmark Suite</span>
+          <span>Mika OS Methodologies</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-grid">
+      <div>
+        <div class="hero-badge">GRASSE // HARVEST № 14 OF 300</div>
+        <h1 class="hero-title">
+          Distilled from the<br><em>verge of evening</em>.
+        </h1>
+        <p class="hero-desc">
+          Harvested exclusively during the twilight hour in Grasse, France. Rare Damascus rose petals, supercritical CO2 smoked birch extracts, and aged French oakwood macerated over 640 continuous days.
+        </p>
+        <a href="#pyramid" class="btn-amber">Discover Accords</a>
+      </div>
+
+      <!-- 3D Flacon Stage -->
+      <div class="flacon-stage-container" id="flaconStage">
+        <div class="stage-hud-overlay">
+          <span class="hud-chip">FLACON № 14 // 100 ML</span>
+          <span class="hud-chip">EXTRAIT 30%</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Telemetry Strip -->
+  <section class="telemetry-strip" id="distillation">
+    <div class="telemetry-grid">
+      <div class="telemetry-metric">
+        <div class="metric-value">640 DAYS</div>
+        <div class="metric-label">OAK MACERATION</div>
+        <div class="metric-sub">Slow maturation in charred Limousin oak barrels to soften raw botanical tannins.</div>
+      </div>
+
+      <div class="telemetry-metric">
+        <div class="metric-value">30 %</div>
+        <div class="metric-label">EXTRAIT CONCENTRATION</div>
+        <div class="metric-sub">Pure olfactory essence guaranteeing 18 hours of continuous dermal presence.</div>
+      </div>
+
+      <div class="telemetry-metric">
+        <div class="metric-value">CO2 CRITIQUE</div>
+        <div class="metric-label">SUPERCRITICAL EXTRACTION</div>
+        <div class="metric-sub">Low-temperature botanical extraction capturing the true scent of live night florals.</div>
+      </div>
+
+      <div class="telemetry-metric">
+        <div class="metric-value">№ 14 / 300</div>
+        <div class="metric-label">LIMITED BATCH BOTTLED</div>
+        <div class="metric-sub">Each obsidian flacon individually numbered and certified by master perfumers.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Olfactory Pyramid -->
+  <section class="pyramid-section" id="pyramid">
+    <div class="section-eyebrow">THE OLFACTORY ARCHITECTURE</div>
+    <h2 class="section-headline">A tripartite progression across dusk and midnight.</h2>
+
+    <div class="pyramid-stack">
+      <div class="pyramid-layer active">
+        <div>
+          <span style="font-family:'JetBrains Mono'; font-size:10px; color:var(--text-muted); text-transform:uppercase;">01 // FIRST CONTACT</span>
+          <h3 class="layer-title">Top Notes</h3>
+        </div>
+        <div class="layer-notes">CALABRIAN BERGAMOT · SMOKED PINK PEPPERCORN · BITTER ORANGE</div>
+      </div>
+
+      <div class="pyramid-layer">
+        <div>
+          <span style="font-family:'JetBrains Mono'; font-size:10px; color:var(--text-muted); text-transform:uppercase;">02 // SENSORY CORE</span>
+          <h3 class="layer-title">Heart Notes</h3>
+        </div>
+        <div class="layer-notes">MIDNIGHT JASMINE · SMOKED BIRCH TAR · DAMASCUS BLACK IRIS</div>
+      </div>
+
+      <div class="pyramid-layer">
+        <div>
+          <span style="font-family:'JetBrains Mono'; font-size:10px; color:var(--text-muted); text-transform:uppercase;">03 // RESIDUAL SHADOW</span>
+          <h3 class="layer-title">Base Notes</h3>
+        </div>
+        <div class="layer-notes">AGED FRENCH OAK · BLACK AMBER · MADAGASCAR BOURBON VANILLA</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer id="atelier">
+    <div class="footer-bottom">
+      <span>© 2026 VESPERA PARFUMS SA. GRASSE // 43°40'N 6°55'E</span>
+      <span>HARVEST № 14 // 300 FLACONS WORLDWIDE</span>
+    </div>
+  </footer>
+
+  <!-- 3D Flacon Script -->
+  <script>
+    const stage = document.getElementById('flaconStage');
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(40, stage.clientWidth / stage.clientHeight, 0.1, 100);
+    camera.position.set(0, 0, 7);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+    renderer.setSize(stage.clientWidth, stage.clientHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.35;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    stage.appendChild(renderer.domElement);
+
+    // =========================================================================
+    // DYNAMIC STUDIO HDRI REFLECTION ENVIRONMENT (AMBER / TWILIGHT MOOD)
+    // =========================================================================
+    function createPerfumeStudioEnvironment(glRenderer) {
+      const pmrem = new THREE.PMREMGenerator(glRenderer);
+      pmrem.compileEquirectangularShader();
+
+      const c = document.createElement('canvas');
+      c.width = 1024;
+      c.height = 512;
+      const ctx = c.getContext('2d');
+
+      // Twilight ambient gradient
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, 512);
+      bgGrad.addColorStop(0, '#100814');
+      bgGrad.addColorStop(0.4, '#1c1022');
+      bgGrad.addColorStop(0.7, '#0c060e');
+      bgGrad.addColorStop(1, '#050206');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, 1024, 512);
+
+      // Warm Amber Key Softbox (Top-Left 45°)
+      const keySoftbox = ctx.createRadialGradient(300, 140, 10, 300, 140, 180);
+      keySoftbox.addColorStop(0, 'rgba(255, 220, 160, 1.0)');
+      keySoftbox.addColorStop(0.3, 'rgba(235, 170, 90, 0.85)');
+      keySoftbox.addColorStop(0.7, 'rgba(180, 83, 9, 0.3)');
+      keySoftbox.addColorStop(1, 'rgba(180, 83, 9, 0)');
+      ctx.fillStyle = keySoftbox;
+      ctx.fillRect(100, 0, 400, 280);
+
+      // Cool Violet-Silver Rim Strip Softbox (Top-Right 135°)
+      const rimSoftbox = ctx.createLinearGradient(700, 40, 880, 240);
+      rimSoftbox.addColorStop(0, 'rgba(230, 200, 255, 0.95)');
+      rimSoftbox.addColorStop(0.4, 'rgba(168, 85, 247, 0.55)');
+      rimSoftbox.addColorStop(1, 'rgba(168, 85, 247, 0)');
+      ctx.fillStyle = rimSoftbox;
+      ctx.fillRect(680, 30, 240, 220);
+
+      // Top Diffuse Skylight
+      const topSkylight = ctx.createRadialGradient(512, 40, 10, 512, 40, 300);
+      topSkylight.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+      topSkylight.addColorStop(0.5, 'rgba(255, 240, 220, 0.25)');
+      topSkylight.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      ctx.fillStyle = topSkylight;
+      ctx.fillRect(180, 0, 664, 160);
+
+      const texture = new THREE.CanvasTexture(c);
+      texture.mapping = THREE.EquirectangularReflectionMapping;
+      const envMap = pmrem.fromEquirectangular(texture).texture;
+      texture.dispose();
+      pmrem.dispose();
+      return envMap;
+    }
+
+    const perfumeEnv = createPerfumeStudioEnvironment(renderer);
+    scene.environment = perfumeEnv;
+
+    // Contact Shadow & Amber Caustic Light Pool Texture
+    function createPerfumeShadowTexture() {
+      const c = document.createElement('canvas');
+      c.width = 512;
+      c.height = 512;
+      const ctx = c.getContext('2d');
+
+      // Contact shadow core
+      const shadowGrad = ctx.createRadialGradient(256, 256, 10, 256, 256, 200);
+      shadowGrad.addColorStop(0, 'rgba(0, 0, 0, 0.92)');
+      shadowGrad.addColorStop(0.3, 'rgba(0, 0, 0, 0.6)');
+      shadowGrad.addColorStop(0.7, 'rgba(0, 0, 0, 0.15)');
+      shadowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = shadowGrad;
+      ctx.fillRect(0, 0, 512, 512);
+
+      // Amber Caustic Pool refraction glow
+      const causticGrad = ctx.createRadialGradient(270, 270, 10, 270, 270, 180);
+      causticGrad.addColorStop(0, 'rgba(245, 158, 11, 0.45)');
+      causticGrad.addColorStop(0.4, 'rgba(217, 119, 6, 0.2)');
+      causticGrad.addColorStop(0.8, 'rgba(180, 83, 9, 0.05)');
+      causticGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = causticGrad;
+      ctx.fillRect(0, 0, 512, 512);
+
+      return new THREE.CanvasTexture(c);
+    }
+
+    // Shadow plane
+    const shadowGeo = new THREE.PlaneGeometry(6.5, 6.5);
+    const shadowMat = new THREE.MeshBasicMaterial({
+      map: createPerfumeShadowTexture(),
+      transparent: true,
+      depthWrite: false
+    });
+    const shadowMesh = new THREE.Mesh(shadowGeo, shadowMat);
+    shadowMesh.position.set(0, -2.4, -0.2);
+    shadowMesh.rotation.x = -Math.PI / 2.3;
+    scene.add(shadowMesh);
+
+    // Warm Ambient Scent Lighting Rigs
+    const keyLight = new THREE.DirectionalLight(0xffecd1, 3.2);
+    keyLight.position.set(4, 7, 5);
+    keyLight.castShadow = true;
+    scene.add(keyLight);
+
+    const rimLight = new THREE.DirectionalLight(0xc084fc, 2.0);
+    rimLight.position.set(-5, -2, -3);
+    scene.add(rimLight);
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
+
+    // Flacon Model Group
+    const flaconGroup = new THREE.Group();
+    scene.add(flaconGroup);
+
+    // =========================================================================
+    // PHOTOREALISTIC CRYSTAL & LIQUID MATERIALS
+    // =========================================================================
+    const heavyCrystalMat = new THREE.MeshPhysicalMaterial({
+      color: 0xffffff,
+      transmission: 0.97,
+      opacity: 1.0,
+      transparent: true,
+      roughness: 0.02,
+      metalness: 0.0,
+      ior: 1.54, // Baccarat crystal refractive index
+      thickness: 2.2, // Heavy glass wall thickness
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.02,
+      reflectivity: 0.95,
+      attenuationColor: 0x2e1035, // Twilight plum edge absorption
+      attenuationDistance: 3.5,
+      envMapIntensity: 1.8
+    });
+
+    const amberLiquidMat = new THREE.MeshPhysicalMaterial({
+      color: 0xf59e0b,
+      emissive: 0x78350f,
+      emissiveIntensity: 0.25,
+      transmission: 0.88,
+      transparent: true,
+      opacity: 0.92,
+      roughness: 0.06,
+      metalness: 0.1,
+      ior: 1.42,
+      attenuationColor: 0xb45309,
+      attenuationDistance: 1.1,
+      envMapIntensity: 1.6
+    });
+
+    const polishedGoldMat = new THREE.MeshStandardMaterial({
+      color: 0xf3d67b,
+      metalness: 0.96,
+      roughness: 0.12,
+      envMapIntensity: 2.2
+    });
+
+    const obsidianCapMat = new THREE.MeshStandardMaterial({
+      color: 0x120a14,
+      metalness: 0.88,
+      roughness: 0.18,
+      envMapIntensity: 1.6
+    });
+
+    // 1. Heavyweight Faceted Crystal Bottle Body (Chamfered Octagonal Silhouette)
+    const bottleShape = new THREE.Shape();
+    const w = 1.05, h = 1.55, cR = 0.35;
+    bottleShape.moveTo(-w + cR, -h);
+    bottleShape.lineTo(w - cR, -h);
+    bottleShape.quadraticCurveTo(w, -h, w, -h + cR);
+    bottleShape.lineTo(w, h - cR);
+    bottleShape.quadraticCurveTo(w, h, w - cR, h);
+    bottleShape.lineTo(-w + cR, h);
+    bottleShape.quadraticCurveTo(-w, h, -w, h - cR);
+    bottleShape.lineTo(-w, -h + cR);
+    bottleShape.quadraticCurveTo(-w, -h, -w + cR, -h);
+
+    const extrudeSettings = {
+      depth: 0.85,
+      bevelEnabled: true,
+      bevelSegments: 8,
+      steps: 2,
+      bevelSize: 0.18,
+      bevelThickness: 0.18
+    };
+
+    const crystalGeo = new THREE.ExtrudeGeometry(bottleShape, extrudeSettings);
+    crystalGeo.center();
+    const flaconMesh = new THREE.Mesh(crystalGeo, heavyCrystalMat);
+    flaconGroup.add(flaconMesh);
+
+    // Solid Crystal Weighted Foot (The bottom 20% is thick, solid glass)
+    const baseGeo = new THREE.BoxGeometry(1.9, 0.45, 0.95);
+    const baseMesh = new THREE.Mesh(baseGeo, heavyCrystalMat);
+    baseMesh.position.y = -1.45;
+    flaconGroup.add(baseMesh);
+
+    // 2. Macerated Fragrance Liquid Column (Suspended inside crystal)
+    const liquidShape = new THREE.Shape();
+    const lw = 0.82, lh = 1.18, lcR = 0.22;
+    liquidShape.moveTo(-lw + lcR, -lh);
+    liquidShape.lineTo(lw - lcR, -lh);
+    liquidShape.quadraticCurveTo(lw, -lh, lw, -lh + lcR);
+    liquidShape.lineTo(lw, lh - lcR);
+    liquidShape.quadraticCurveTo(lw, lh, lw - lcR, lh);
+    liquidShape.lineTo(-lw + lcR, lh);
+    liquidShape.quadraticCurveTo(-lw, lh, -lw, lh - lcR);
+    liquidShape.lineTo(-lw, -lh + lcR);
+    liquidShape.quadraticCurveTo(-lw, -lh, -lw + lcR, -lh);
+
+    const liquidExtrude = {
+      depth: 0.62,
+      bevelEnabled: true,
+      bevelSegments: 4,
+      steps: 1,
+      bevelSize: 0.08,
+      bevelThickness: 0.08
+    };
+    const liquidGeo = new THREE.ExtrudeGeometry(liquidShape, liquidExtrude);
+    liquidGeo.center();
+    const liquidMesh = new THREE.Mesh(liquidGeo, amberLiquidMat);
+    liquidMesh.position.y = -0.15;
+    flaconGroup.add(liquidMesh);
+
+    // 3. Clear Internal Dip Tube
+    const tubeGeo = new THREE.CylinderGeometry(0.035, 0.035, 2.3, 16);
+    const tubeMat = new THREE.MeshPhysicalMaterial({
+      color: 0xffffff,
+      transmission: 0.95,
+      roughness: 0.05,
+      ior: 1.48
+    });
+    const tubeMesh = new THREE.Mesh(tubeGeo, tubeMat);
+    tubeMesh.position.set(0.04, -0.2, 0);
+    tubeMesh.rotation.z = 0.04; // subtle natural angle
+    flaconGroup.add(tubeMesh);
+
+    // 4. Knurled 24K Gold Spray Collar & Nozzle
+    const collarGroup = new THREE.Group();
+    collarGroup.position.y = 1.68;
+    flaconGroup.add(collarGroup);
+
+    const collarCore = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.42, 0.35, 32), polishedGoldMat);
+    collarGroup.add(collarCore);
+
+    // Precision knurling rings
+    for (let k = 0; k < 3; k++) {
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.40, 0.02, 12, 32), polishedGoldMat);
+      ring.position.y = -0.08 + k * 0.08;
+      collarGroup.add(ring);
+    }
+
+    // Micro-Sprayer Nozzle
+    const nozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.25, 24), polishedGoldMat);
+    nozzle.position.y = 0.28;
+    collarGroup.add(nozzle);
+
+    // 5. Monolithic Heavy Obsidian & Gold Inset Cap
+    const capGroup = new THREE.Group();
+    capGroup.position.y = 2.45;
+    flaconGroup.add(capGroup);
+
+    const capGeo = new THREE.BoxGeometry(1.45, 1.05, 0.95);
+    const capMesh = new THREE.Mesh(capGeo, obsidianCapMat);
+    capGroup.add(capMesh);
+
+    // Gold Trim Base Ring on Cap
+    const capRim = new THREE.Mesh(new THREE.BoxGeometry(1.48, 0.08, 0.98), polishedGoldMat);
+    capRim.position.y = -0.48;
+    capGroup.add(capRim);
+
+    // Top Engraved Monogram Inset Plaque
+    const plaqueGeo = new THREE.BoxGeometry(0.95, 0.04, 0.55);
+    const plaqueMesh = new THREE.Mesh(plaqueGeo, polishedGoldMat);
+    plaqueMesh.position.y = 0.53;
+    capGroup.add(plaqueMesh);
+
+    // Render Loop with Fluid Damping
+    let mouseTargetX = 0, mouseTargetY = 0;
+    stage.addEventListener('mousemove', (e) => {
+      const rect = stage.getBoundingClientRect();
+      mouseTargetX = ((e.clientX - rect.left) / rect.width - 0.5) * 0.8;
+      mouseTargetY = ((e.clientY - rect.top) / rect.height - 0.5) * 0.5;
+    });
+
+    function render(time) {
+      const t = time * 0.001;
+      const naturalY = Math.sin(t * 0.4) * 0.35;
+      const naturalX = Math.cos(t * 0.3) * 0.12;
+
+      flaconGroup.rotation.y += ((naturalY + mouseTargetX) - flaconGroup.rotation.y) * 0.06;
+      flaconGroup.rotation.x += ((naturalX + mouseTargetY) - flaconGroup.rotation.x) * 0.06;
+      flaconGroup.position.y = Math.sin(t * 1.2) * 0.06;
+
+      renderer.render(scene, camera);
+      requestAnimationFrame(render);
+    }
+    requestAnimationFrame(render);
+
+    // Switcher & Cursor
+    const atelierBtn = document.getElementById('atelierBtn');
+    const atelierMenu = document.getElementById('atelierMenu');
+    atelierBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      atelierMenu.classList.toggle('active');
+    });
+    window.addEventListener('click', () => { atelierMenu.classList.remove('active'); });
+
+    const cursorRing = document.getElementById('cursorRing');
+    const cursorDot = document.getElementById('cursorDot');
+    let mX = -100, mY = -100, rX = -100, rY = -100;
+    window.addEventListener('mousemove', (e) => {
+      mX = e.clientX;
+      mY = e.clientY;
+      cursorDot.style.transform = `translate(${mX}px, ${mY}px)`;
+    });
+    function cursorLoop() {
+      rX += (mX - rX) * 0.18;
+      rY += (mY - rY) * 0.18;
+      cursorRing.style.transform = `translate(${rX}px, ${rY}px)`;
+      requestAnimationFrame(cursorLoop);
+    }
+    requestAnimationFrame(cursorLoop);
+
+    // Pyramid Tabs
+    document.querySelectorAll('.pyramid-layer').forEach(layer => {
+      layer.addEventListener('click', () => {
+        document.querySelectorAll('.pyramid-layer').forEach(l => l.classList.remove('active'));
+        layer.classList.add('active');
+      });
+    });
+  </script>
+<div class="study-credit" style="position:fixed;left:12px;bottom:10px;z-index:99999;max-width:calc(100vw - 24px);padding:5px 10px;font:500 11px/1.3 system-ui,sans-serif;letter-spacing:.02em;color:#e8e8e8;background:rgba(0,0,0,.72);border:1px solid rgba(255,255,255,.18);border-radius:4px;pointer-events:none">Study build, design credit: Alex Carter / BoostStash</div>
+</body>
+</html>

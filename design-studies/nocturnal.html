@@ -1,0 +1,1771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NOC-TURNAL — Haute Horlogerie Atelier // Geneva</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  
+  <!-- Three.js r128 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <style>
+    :root {
+      --bg-void: #070709;
+      --bg-surface: rgba(14, 14, 18, 0.7);
+      --bg-surface-elevated: rgba(22, 22, 28, 0.85);
+      --border-hairline: rgba(255, 255, 255, 0.08);
+      --border-accent: rgba(212, 175, 55, 0.35);
+      --gold-primary: #d4af37;
+      --gold-light: #f3e5ab;
+      --gold-dark: #8c7322;
+      --rose-gold: #e0a96d;
+      --titanium: #2a2d34;
+      --ruby-jewel: #e0115f;
+      --ice-blue: #7df9ff;
+      --text-primary: #f8f8fa;
+      --text-secondary: rgba(248, 248, 250, 0.65);
+      --text-muted: rgba(248, 248, 250, 0.38);
+      --radius-sm: 6px;
+      --radius-md: 12px;
+      --radius-lg: 24px;
+      --radius-pill: 9999px;
+      --transition-spring: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background-color: var(--bg-void);
+      color: var(--text-primary);
+      font-family: 'Inter', -apple-system, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+      selection-background-color: var(--gold-primary);
+      selection-color: #000;
+    }
+
+    /* Ambient Dynamic Mesh Background (MotionSites Craft Stack) */
+    .ambient-mesh {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background: radial-gradient(circle at var(--mesh-x, 30%) var(--mesh-y, 25%), rgba(212, 175, 55, 0.07) 0%, transparent 60%),
+                  radial-gradient(circle at 75% 70%, rgba(125, 249, 255, 0.03) 0%, transparent 55%),
+                  radial-gradient(circle at 50% 50%, rgba(224, 169, 109, 0.04) 0%, transparent 70%);
+      pointer-events: none;
+      transition: background 0.8s ease;
+    }
+
+    /* SVG Grain Overlay (Luxury Pillar 3) */
+    .grain-overlay {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.04;
+      mix-blend-mode: overlay;
+    }
+
+    /* Magnetic Custom Cursor */
+    .cursor-ring {
+      position: fixed;
+      width: 32px;
+      height: 32px;
+      border: 1px solid rgba(212, 175, 55, 0.45);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 10000;
+      transform: translate(-50%, -50%);
+      transition: width 0.2s ease, height 0.2s ease, border-color 0.2s ease;
+      will-change: transform;
+    }
+
+    .cursor-dot {
+      position: fixed;
+      width: 4px;
+      height: 4px;
+      background: var(--gold-light);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 10001;
+      transform: translate(-50%, -50%);
+      will-change: transform;
+    }
+
+    /* Floating Capsule Header */
+    header {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 64px);
+      max-width: 1320px;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 28px;
+      background: rgba(12, 12, 15, 0.75);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border-hairline);
+      border-radius: var(--radius-pill);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .brand-mark-group {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .brand-monogram {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1px solid var(--gold-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--gold-light);
+      background: radial-gradient(circle at center, rgba(212, 175, 55, 0.15), transparent 70%);
+    }
+
+    .brand-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 20px;
+      letter-spacing: 0.18em;
+      font-weight: 400;
+      text-transform: uppercase;
+      color: var(--text-primary);
+    }
+
+    /* Navigation Links */
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      list-style: none;
+    }
+
+    .nav-link {
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: color 0.25s ease;
+      position: relative;
+      padding: 4px 0;
+    }
+
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      height: 1px;
+      background: var(--gold-primary);
+      transition: width 0.3s var(--transition-spring);
+    }
+
+    .nav-link:hover {
+      color: #fff;
+    }
+
+    .nav-link:hover::after {
+      width: 100%;
+    }
+
+    /* Atelier Switcher Dropdown Capsule */
+    .atelier-switcher {
+      position: relative;
+    }
+
+    .atelier-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-hairline);
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      color: var(--gold-light);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    .atelier-btn:hover {
+      background: rgba(212, 175, 55, 0.15);
+      border-color: var(--gold-primary);
+    }
+
+    .atelier-menu {
+      position: absolute;
+      top: calc(100% + 12px);
+      right: 0;
+      width: 240px;
+      background: rgba(14, 14, 18, 0.95);
+      backdrop-filter: blur(24px);
+      border: 1px solid var(--border-hairline);
+      border-radius: var(--radius-md);
+      padding: 8px;
+      display: none;
+      flex-direction: column;
+      gap: 4px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+      z-index: 200;
+    }
+
+    .atelier-menu.active {
+      display: flex;
+    }
+
+    .atelier-item {
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      transition: all 0.2s ease;
+    }
+
+    .atelier-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
+    }
+
+    .atelier-item.current {
+      background: rgba(212, 175, 55, 0.12);
+      border-left: 2px solid var(--gold-primary);
+      color: var(--gold-light);
+    }
+
+    .atelier-item span:first-child {
+      font-weight: 500;
+      letter-spacing: 0.05em;
+    }
+
+    .atelier-item span:last-child {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9.5px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    /* Hero Section */
+    .hero-section {
+      min-height: 100vh;
+      position: relative;
+      display: flex;
+      align-items: center;
+      padding: 140px 48px 60px;
+      max-width: 1440px;
+      margin: 0 auto;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 60px;
+      align-items: center;
+      width: 100%;
+      z-index: 10;
+    }
+
+    .hero-content {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      width: fit-content;
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      background: rgba(212, 175, 55, 0.08);
+      border: 1px solid rgba(212, 175, 55, 0.25);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--gold-light);
+    }
+
+    .pulse-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--gold-primary);
+      box-shadow: 0 0 8px var(--gold-primary);
+      animation: pulse-gem 2s infinite ease-in-out;
+    }
+
+    @keyframes pulse-gem {
+      0%, 100% { opacity: 0.4; transform: scale(0.9); }
+      50% { opacity: 1; transform: scale(1.2); }
+    }
+
+    .hero-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(48px, 6vw, 76px);
+      font-weight: 300;
+      line-height: 1.02;
+      letter-spacing: -0.01em;
+      color: var(--text-primary);
+    }
+
+    .hero-title em {
+      font-style: italic;
+      color: var(--gold-light);
+      font-weight: 400;
+    }
+
+    .hero-desc {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.8;
+      max-width: 520px;
+      font-weight: 300;
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-top: 12px;
+    }
+
+    .btn-gold {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(135deg, var(--gold-primary), var(--gold-dark));
+      color: #070709;
+      font-family: 'Inter', sans-serif;
+      font-size: 12.5px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 14px 32px;
+      border-radius: var(--radius-pill);
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(212, 175, 55, 0.25);
+      transition: all 0.3s var(--transition-spring);
+    }
+
+    .btn-gold:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 6px 28px rgba(212, 175, 55, 0.4);
+      background: linear-gradient(135deg, var(--gold-light), var(--gold-primary));
+    }
+
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: transparent;
+      color: var(--text-primary);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 14px 24px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-hairline);
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    .btn-ghost:hover {
+      border-color: rgba(255, 255, 255, 0.25);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    /* 3D Kinetic Watch Movement Stage */
+    .watch-stage-container {
+      position: relative;
+      width: 100%;
+      height: 580px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .watch-canvas-viewport {
+      width: 100%;
+      height: 100%;
+      border-radius: var(--radius-lg);
+      position: relative;
+      overflow: hidden;
+      cursor: grab;
+    }
+
+    .watch-canvas-viewport:active {
+      cursor: grabbing;
+    }
+
+    .stage-hud-overlay {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      right: 20px;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .hud-chip {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      background: rgba(14, 14, 18, 0.7);
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-hairline);
+      backdrop-filter: blur(12px);
+      color: var(--text-secondary);
+    }
+
+    .stage-controls {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      z-index: 10;
+      background: rgba(14, 14, 18, 0.8);
+      padding: 6px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-hairline);
+      backdrop-filter: blur(16px);
+    }
+
+    .stage-ctrl-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .stage-ctrl-btn:hover {
+      color: #fff;
+    }
+
+    .stage-ctrl-btn.active {
+      background: var(--gold-primary);
+      color: #070709;
+      font-weight: 600;
+    }
+
+    /* Live Chronometric Telemetry Strip */
+    .telemetry-strip {
+      border-top: 1px solid var(--border-hairline);
+      border-bottom: 1px solid var(--border-hairline);
+      background: rgba(10, 10, 14, 0.6);
+      backdrop-filter: blur(16px);
+      padding: 32px 48px;
+      margin: 40px auto 100px;
+      max-width: 1440px;
+    }
+
+    .telemetry-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 32px;
+    }
+
+    .telemetry-metric {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      border-left: 1px solid var(--border-hairline);
+      padding-left: 24px;
+    }
+
+    .metric-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: clamp(24px, 2.5vw, 32px);
+      font-weight: 400;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+
+    .metric-label {
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--gold-accent, var(--gold-primary));
+    }
+
+    .metric-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* Curated Timepiece Collection (Asymmetric Editorial Grid) */
+    .collection-section {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 0 48px 120px;
+    }
+
+    .section-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.3em;
+      color: var(--gold-primary);
+      margin-bottom: 12px;
+    }
+
+    .section-headline {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(36px, 4vw, 56px);
+      font-weight: 300;
+      line-height: 1.05;
+      letter-spacing: -0.01em;
+      margin-bottom: 60px;
+      max-width: 720px;
+    }
+
+    .timepiece-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 36px;
+      align-items: stretch;
+      margin-bottom: 36px;
+    }
+
+    .timepiece-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-hairline);
+      border-radius: var(--radius-lg);
+      padding: 44px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: border-color 0.3s ease, transform 0.4s var(--transition-spring);
+    }
+
+    .timepiece-card:hover {
+      border-color: rgba(212, 175, 55, 0.4);
+      transform: translateY(-4px);
+    }
+
+    .timepiece-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(800px circle at var(--card-mouse-x, -500px) var(--card-mouse-y, -500px), rgba(212, 175, 55, 0.08), transparent 45%);
+      pointer-events: none;
+    }
+
+    .card-top-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+    }
+
+    .piece-edition {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      color: var(--gold-light);
+      background: rgba(212, 175, 55, 0.12);
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(212, 175, 55, 0.25);
+    }
+
+    .piece-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 34px;
+      font-weight: 400;
+      line-height: 1.1;
+      margin-bottom: 12px;
+    }
+
+    .piece-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: 32px;
+      max-width: 480px;
+    }
+
+    .piece-specs-row {
+      display: flex;
+      gap: 28px;
+      border-top: 1px solid var(--border-hairline);
+      padding-top: 24px;
+      margin-top: auto;
+    }
+
+    .piece-spec {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .piece-spec strong {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 15px;
+      color: var(--text-primary);
+    }
+
+    .piece-spec span {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--text-muted);
+    }
+
+    /* Craftsmanship Deep Dive (Pillar 6) */
+    .craft-section {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 0 48px 140px;
+    }
+
+    .craft-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .craft-card {
+      background: rgba(14, 14, 18, 0.5);
+      border: 1px solid var(--border-hairline);
+      border-radius: var(--radius-md);
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transition: all 0.3s ease;
+    }
+
+    .craft-card:hover {
+      background: rgba(20, 20, 26, 0.8);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .craft-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 28px;
+      font-style: italic;
+      color: var(--gold-primary);
+    }
+
+    .craft-title {
+      font-size: 17px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .craft-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    /* Minimalist High-Fashion Footer */
+    footer {
+      border-top: 1px solid var(--border-hairline);
+      background: #050507;
+      padding: 80px 48px 40px;
+      max-width: 1440px;
+      margin: 0 auto;
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 48px;
+      margin-bottom: 60px;
+    }
+
+    .footer-brand-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 28px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .footer-sub {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      max-width: 380px;
+    }
+
+    .footer-col-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.25em;
+      color: var(--gold-primary);
+      margin-bottom: 20px;
+    }
+
+    .footer-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .footer-link {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 13px;
+      transition: color 0.2s ease;
+    }
+
+    .footer-link:hover {
+      color: #fff;
+    }
+
+    .footer-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 32px;
+      border-top: 1px solid var(--border-hairline);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+  
+@media (max-width: 860px) {
+  html, body { overflow-x: hidden !important; width: 100% !important; max-width: 100% !important; }
+  header { padding: 14px 20px !important; box-sizing: border-box !important; width: 100% !important; }
+  .nav-links { display: none !important; }
+  .hero-section { padding: 90px 20px 40px !important; min-height: auto !important; box-sizing: border-box !important; width: 100% !important; }
+  .hero-grid { grid-template-columns: 1fr !important; gap: 32px !important; width: 100% !important; }
+  .hero-title { font-size: clamp(34px, 8vw, 48px) !important; }
+  .pavilion-stage-container, .timepiece-stage, .olfactory-stage, .stage-container, .sonder-stage { height: 340px !important; width: 100% !important; max-width: 100% !important; box-sizing: border-box !important; }
+  .stage-hud-overlay { top: 10px !important; left: 10px !important; right: 10px !important; }
+  .hud-chip { font-size: 9px !important; padding: 4px 8px !important; }
+  .solar-slider-bar { bottom: 10px !important; left: 10px !important; right: 10px !important; padding: 6px 12px !important; box-sizing: border-box !important; }
+  .solar-label { font-size: 9.5px !important; }
+  .telemetry-grid { grid-template-columns: 1fr 1fr !important; gap: 16px !important; width: 100% !important; }
+  .project-grid, .timepiece-grid, .craft-grid, .footer-grid { grid-template-columns: 1fr !important; gap: 24px !important; width: 100% !important; }
+  section, .container, .monograph-section, .collection-section, .craft-section, .pyramid-section, .studio-section { padding-inline: 20px !important; max-width: 100% !important; box-sizing: border-box !important; }
+  footer { padding: 36px 20px !important; box-sizing: border-box !important; width: 100% !important; }
+}
+
+</style>
+</head>
+<body>
+
+  <!-- Dynamic Ambient Mesh Background -->
+  <div class="ambient-mesh" id="ambientMesh"></div>
+
+  <!-- Film Grain Overlay -->
+  <svg class="grain-overlay">
+    <filter id="noise">
+      <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch" />
+      <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0" />
+    </filter>
+    <rect width="100%" height="100%" filter="url(#noise)" />
+  </svg>
+
+  <!-- Magnetic Cursor -->
+  <div class="cursor-ring" id="cursorRing"></div>
+  <div class="cursor-dot" id="cursorDot"></div>
+
+  <!-- Floating Capsule Header -->
+  <header>
+    <a href="#" class="brand-mark-group">
+      <div class="brand-monogram">NT</div>
+      <div class="brand-name">NOC-TURNAL</div>
+    </a>
+
+    <ul class="nav-links">
+      <li><a href="#timepieces" class="nav-link">Creations</a></li>
+      <li><a href="#movement" class="nav-link">Caliber 804</a></li>
+      <li><a href="#craft" class="nav-link">Savoir-Faire</a></li>
+      <li><a href="#atelier" class="nav-link">Atelier</a></li>
+    </ul>
+
+    <!-- Atelier Switcher Capsule -->
+    <div class="atelier-switcher">
+      <button class="atelier-btn" id="atelierBtn">
+        <span>COLLECTIONS</span>
+        <svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.2"/></svg>
+      </button>
+
+      <div class="atelier-menu" id="atelierMenu">
+        <a href="nocturnal.html" class="atelier-item current">
+          <span>Noc-Turnal</span>
+          <span>Haute Horlogerie Atelier</span>
+        </a>
+        <a href="aetheria.html" class="atelier-item">
+          <span>Aetheria</span>
+          <span>Spatial & Architecture</span>
+        </a>
+        <a href="vespera.html" class="atelier-item">
+          <span>Vespera</span>
+          <span>Haute Parfumerie</span>
+        </a>
+        <a href="../animation-methodologies-lab/index.html" class="atelier-item">
+          <span>Benchmark Suite</span>
+          <span>Mika OS Methodologies</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Full Bleed Hero Section -->
+  <section class="hero-section">
+    <div class="hero-grid">
+      <div class="hero-content">
+        <div class="hero-badge">
+          <span class="pulse-dot"></span>
+          <span>VALLEE DE JOUX // № 07 OF 48</span>
+        </div>
+
+        <h1 class="hero-title">
+          Precision is born<br>in <em>absolute shadow</em>.
+        </h1>
+
+        <p class="hero-desc">
+          Crafted in secrecy within the Swiss Jura mountains. Hand-beveled titanium bridges, oscillating silicon balance wheels, and a multi-axis tourbillon escapement that defiance gravitation.
+        </p>
+
+        <div class="hero-actions">
+          <a href="#timepieces" class="btn-gold">Explore Timepieces</a>
+          <button class="btn-ghost" id="btnInspectMovement">Inspect Caliber</button>
+        </div>
+      </div>
+
+      <!-- 3D Kinetic Tourbillon Movement Stage -->
+      <div class="watch-stage-container">
+        <div class="watch-canvas-viewport" id="watchStage">
+          <div class="stage-hud-overlay">
+            <span class="hud-chip">CALIBER NT-804 // 4 HZ</span>
+            <span class="hud-chip" id="hudLiveFreq">28,800 VPH</span>
+          </div>
+
+          <div class="stage-controls">
+            <button class="stage-ctrl-btn active" id="btnOrbit">AUTO-ROTATION</button>
+            <button class="stage-ctrl-btn" id="btnExplode">EXPLODE CALIBER</button>
+            <button class="stage-ctrl-btn" id="btnTourbillonSpeed">2X CADENCE</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Live Chronometric Telemetry Strip -->
+  <section class="telemetry-strip" id="movement">
+    <div class="telemetry-grid">
+      <div class="telemetry-metric">
+        <div class="metric-value">28,800</div>
+        <div class="metric-label">VIBRATIONS / HOUR</div>
+        <div class="metric-sub">4 Hz oscillation frequency driven by a balance wheel with variable inertia gold blocks.</div>
+      </div>
+
+      <div class="telemetry-metric">
+        <div class="metric-value">72 HOURS</div>
+        <div class="metric-label">AUTONOMOUS POWER</div>
+        <div class="metric-sub">Dual-series skeletonized barrels providing continuous torque regulation.</div>
+      </div>
+
+      <div class="telemetry-metric">
+        <div class="metric-value">300 METERS</div>
+        <div class="metric-label">HYDROSTATIC RESISTANCE</div>
+        <div class="metric-sub">Monobloc Grade 5 titanium case with dual sapphire crystal seals.</div>
+      </div>
+
+      <div class="telemetry-metric">
+        <div class="metric-value">32 JEWELS</div>
+        <div class="metric-label">SYNTHETIC CORUNDUM</div>
+        <div class="metric-sub">Frictionless ruby pivot points micro-polished to 0.05-micron tolerances.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Curated Timepiece Collection -->
+  <section class="collection-section" id="timepieces">
+    <div class="section-eyebrow">LIMITED ATELIER PRODUCTION</div>
+    <h2 class="section-headline">Three expressions of chronological mastery.</h2>
+
+    <div class="timepiece-grid">
+      <!-- Piece 1: Celestial Tourbillon -->
+      <div class="timepiece-card">
+        <div class="card-top-meta">
+          <span class="piece-edition">№ 01 — 12 PIECES</span>
+          <span style="font-family:'JetBrains Mono'; font-size:11px; color:var(--text-muted);">REF. NT-CELESTIAL</span>
+        </div>
+        <h3 class="piece-title">The Celestial Tourbillon</h3>
+        <p class="piece-desc">
+          A flying 60-second tourbillon cage floating over an aventurine crystal dial, evoking the starfields above the Le Brassus observatory.
+        </p>
+        <div class="piece-specs-row">
+          <div class="piece-spec">
+            <strong>42.5 MM</strong>
+            <span>CASE DIAMETER</span>
+          </div>
+          <div class="piece-spec">
+            <strong>GRADE 5</strong>
+            <span>TITANIUM</span>
+          </div>
+          <div class="piece-spec">
+            <strong>FLYING</strong>
+            <span>TOURBILLON</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Piece 2: Chrono-Eclipse -->
+      <div class="timepiece-card">
+        <div class="card-top-meta">
+          <span class="piece-edition">№ 02 — 18 PIECES</span>
+          <span style="font-family:'JetBrains Mono'; font-size:11px; color:var(--text-muted);">REF. NT-ECLIPSE</span>
+        </div>
+        <h3 class="piece-title">The Chrono-Eclipse</h3>
+        <p class="piece-desc">
+          Monopusher split-seconds chronograph with column-wheel actuation and black DLC thermal coating.
+        </p>
+        <div class="piece-specs-row">
+          <div class="piece-spec">
+            <strong>41.0 MM</strong>
+            <span>CASE DIAMETER</span>
+          </div>
+          <div class="piece-spec">
+            <strong>BLACK DLC</strong>
+            <span>FINISH</span>
+          </div>
+          <div class="piece-spec">
+            <strong>SPLIT-SEC</strong>
+            <span>COMPLICATION</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Piece 3: Monolith Skeleton (Full Bleed Card) -->
+    <div class="timepiece-card" style="grid-column: span 2;">
+      <div class="card-top-meta">
+        <span class="piece-edition">№ 03 — 18 PIECES</span>
+        <span style="font-family:'JetBrains Mono'; font-size:11px; color:var(--text-muted);">REF. NT-MONOLITH</span>
+      </div>
+      <h3 class="piece-title">The Monolith Skeleton</h3>
+      <p class="piece-desc" style="max-width:760px;">
+        Fully open-worked caliber revealing the intricate gear train. Every steel edge is hand-chamfered and black-polished by master artisans over 140 continuous bench hours.
+      </p>
+      <div class="piece-specs-row">
+        <div class="piece-spec">
+          <strong>40.0 MM</strong>
+          <span>DIAMETER</span>
+        </div>
+        <div class="piece-spec">
+          <strong>140 HRS</strong>
+          <span>HAND-CHAMFERING</span>
+        </div>
+        <div class="piece-spec">
+          <strong>BLACK POLISH</strong>
+          <span>SURFACE GRAIN</span>
+        </div>
+        <div class="piece-spec">
+          <strong>INTEGRATED</strong>
+          <span>TITANIUM BRACELET</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Savoir-Faire / Craftsmanship Deep Dive -->
+  <section class="craft-section" id="craft">
+    <div class="section-eyebrow">THE ATELIER PROTOCOL</div>
+    <h2 class="section-headline">Savoir-faire executed without compromise.</h2>
+
+    <div class="craft-grid">
+      <div class="craft-card">
+        <div class="craft-num">01 /</div>
+        <h4 class="craft-title">Hand-Chamfered Anglage</h4>
+        <p class="craft-desc">
+          Internal angles beveled to a flawless 45-degree angle using gentian wood pegs and diamond paste, reflecting light in razor-sharp ribbons.
+        </p>
+      </div>
+
+      <div class="craft-card">
+        <div class="craft-num">02 /</div>
+        <h4 class="craft-title">Silicon Hairspring Mechanics</h4>
+        <p class="craft-desc">
+          Etched using deep reactive-ion etching (DRIE) for total magnetic immunity up to 15,000 Gauss and perfect concentric expansion.
+        </p>
+      </div>
+
+      <div class="craft-card">
+        <div class="craft-num">03 /</div>
+        <h4 class="craft-title">Geneva Stripe Perlage</h4>
+        <p class="craft-desc">
+          Parallel decorative waves machined with abrasive boxwood laps, creating holographic optical refraction beneath the sapphire caseback.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Luxury Minimalist Footer -->
+  <footer id="atelier">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand-title">NOC-TURNAL</div>
+        <p class="footer-sub">
+          Manufacture d'Horlogerie. Hand-assembled in the Vallée de Joux, Switzerland. Dedicated to the pursuit of chronometric purity.
+        </p>
+      </div>
+
+      <div>
+        <div class="footer-col-title">Creations</div>
+        <ul class="footer-list">
+          <li><a href="#" class="footer-link">Celestial Tourbillon</a></li>
+          <li><a href="#" class="footer-link">Chrono-Eclipse</a></li>
+          <li><a href="#" class="footer-link">Monolith Skeleton</a></li>
+          <li><a href="#" class="footer-link">Atelier Commissions</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <div class="footer-col-title">Manufacture</div>
+        <ul class="footer-list">
+          <li><a href="#" class="footer-link">The Calibers</a></li>
+          <li><a href="#" class="footer-link">Anglage Finishing</a></li>
+          <li><a href="#" class="footer-link">Chronometry Lab</a></li>
+          <li><a href="#" class="footer-link">Geneva Seal</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <div class="footer-col-title">Private Concierge</div>
+        <ul class="footer-list">
+          <li><a href="#" class="footer-link">Private Viewing</a></li>
+          <li><a href="#" class="footer-link">Certificate Registry</a></li>
+          <li><a href="#" class="footer-link">Geneva Salon</a></li>
+          <li><a href="#" class="footer-link">Zurich Vault</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <span>© 2026 NOC-TURNAL SA. ALL RIGHTS RESERVED.</span>
+      <span>GENEVA // 46°12'N 6°09'E</span>
+      <span>EDITION № 07 / 48</span>
+    </div>
+  </footer>
+
+  <!-- Interactive Three.js Mechanical Watch Caliber -->
+  <script>
+    /* ========================================================================= */
+    /* 1. THREE.JS 3D MECHANICAL TOURBILLON MOVEMENT                             */
+    /* ========================================================================= */
+    const container = document.getElementById('watchStage');
+    const hudLiveFreq = document.getElementById('hudLiveFreq');
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 0.1, 100);
+    camera.position.set(0, 0, 7.5);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.25;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    container.appendChild(renderer.domElement);
+
+    // =========================================================================
+    // DYNAMIC HIGH-DYNAMIC-RANGE STUDIO HDRI ENVIRONMENT (PMREM GENERATOR)
+    // =========================================================================
+    function createStudioEnvironment(glRenderer) {
+      const pmrem = new THREE.PMREMGenerator(glRenderer);
+      pmrem.compileEquirectangularShader();
+
+      const c = document.createElement('canvas');
+      c.width = 1024;
+      c.height = 512;
+      const ctx = c.getContext('2d');
+
+      // Cinematic studio ambient backdrop
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, 512);
+      bgGrad.addColorStop(0, '#0c0d12');
+      bgGrad.addColorStop(0.35, '#161820');
+      bgGrad.addColorStop(0.7, '#0a0b0e');
+      bgGrad.addColorStop(1, '#040406');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, 1024, 512);
+
+      // Studio Softbox 1: Warm Golden Key Light (Top-Left 45°)
+      const keySoftbox = ctx.createRadialGradient(280, 130, 10, 280, 130, 160);
+      keySoftbox.addColorStop(0, 'rgba(255, 242, 215, 1.0)');
+      keySoftbox.addColorStop(0.3, 'rgba(255, 225, 175, 0.85)');
+      keySoftbox.addColorStop(0.7, 'rgba(212, 175, 55, 0.3)');
+      keySoftbox.addColorStop(1, 'rgba(212, 175, 55, 0)');
+      ctx.fillStyle = keySoftbox;
+      ctx.fillRect(100, 0, 360, 260);
+
+      // Studio Softbox 2: Cool Rim Strip Softbox (Top-Right 135°)
+      const rimSoftbox = ctx.createLinearGradient(720, 40, 880, 240);
+      rimSoftbox.addColorStop(0, 'rgba(230, 245, 255, 0.95)');
+      rimSoftbox.addColorStop(0.4, 'rgba(125, 249, 255, 0.6)');
+      rimSoftbox.addColorStop(1, 'rgba(125, 249, 255, 0)');
+      ctx.fillStyle = rimSoftbox;
+      ctx.fillRect(700, 30, 220, 220);
+
+      // Overhead Diffusion Skylight
+      const topSkylight = ctx.createRadialGradient(512, 40, 10, 512, 40, 320);
+      topSkylight.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+      topSkylight.addColorStop(0.5, 'rgba(255, 255, 255, 0.25)');
+      topSkylight.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      ctx.fillStyle = topSkylight;
+      ctx.fillRect(180, 0, 664, 160);
+
+      // Floor Warm Ambient Bounce
+      const floorBounce = ctx.createLinearGradient(0, 360, 0, 512);
+      floorBounce.addColorStop(0, 'rgba(224, 169, 109, 0)');
+      floorBounce.addColorStop(1, 'rgba(224, 169, 109, 0.35)');
+      ctx.fillStyle = floorBounce;
+      ctx.fillRect(0, 360, 1024, 152);
+
+      const texture = new THREE.CanvasTexture(c);
+      texture.mapping = THREE.EquirectangularReflectionMapping;
+      const envMap = pmrem.fromEquirectangular(texture).texture;
+      texture.dispose();
+      pmrem.dispose();
+      return envMap;
+    }
+
+    const studioEnvMap = createStudioEnvironment(renderer);
+    scene.environment = studioEnvMap;
+
+    // PROCEDURAL ANISOTROPIC BRUSHED METAL NORMAL MAP
+    function createBrushedNormalMap() {
+      const c = document.createElement('canvas');
+      c.width = 512;
+      c.height = 512;
+      const ctx = c.getContext('2d');
+      const imgData = ctx.createImageData(512, 512);
+      const data = imgData.data;
+      for (let y = 0; y < 512; y++) {
+        for (let x = 0; x < 512; x++) {
+          const idx = (y * 512 + x) * 4;
+          const dx = x - 256;
+          const dy = y - 256;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const angle = Math.atan2(dy, dx);
+          const groove = Math.sin(dist * 1.2) * 0.4 + Math.sin(angle * 180) * 0.15;
+          data[idx] = 128 + Math.floor(groove * 35);
+          data[idx + 1] = 128 + Math.floor(groove * 35);
+          data[idx + 2] = 255;
+          data[idx + 3] = 255;
+        }
+      }
+      ctx.putImageData(imgData, 0, 0);
+      const tex = new THREE.CanvasTexture(c);
+      tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+      return tex;
+    }
+    const brushedNormal = createBrushedNormalMap();
+
+    // PROCEDURAL GUILLOCHÉ SUNBURST DIAL TEXTURE
+    function createGuillocheDialTexture() {
+      const c = document.createElement('canvas');
+      c.width = 1024;
+      c.height = 1024;
+      const ctx = c.getContext('2d');
+
+      // Midnight anthracite base
+      const bg = ctx.createRadialGradient(512, 512, 0, 512, 512, 512);
+      bg.addColorStop(0, '#15171d');
+      bg.addColorStop(0.7, '#0b0c10');
+      bg.addColorStop(1, '#050608');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, 1024, 1024);
+
+      // 180 Guilloché Ray Carvings
+      ctx.save();
+      ctx.translate(512, 512);
+      for (let i = 0; i < 240; i++) {
+        ctx.rotate((Math.PI * 2) / 240);
+        const grad = ctx.createLinearGradient(0, 0, 0, 490);
+        const isHighlight = i % 2 === 0;
+        grad.addColorStop(0, isHighlight ? 'rgba(212, 175, 55, 0.45)' : 'rgba(20, 22, 30, 0.85)');
+        grad.addColorStop(0.5, isHighlight ? 'rgba(243, 229, 171, 0.22)' : 'rgba(8, 9, 12, 0.95)');
+        grad.addColorStop(1, 'rgba(2, 3, 4, 1)');
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = 1.3;
+        ctx.beginPath();
+        ctx.moveTo(0, 80);
+        ctx.lineTo(0, 490);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // Minute Chapter Track
+      ctx.save();
+      ctx.translate(512, 512);
+      ctx.strokeStyle = 'rgba(212, 175, 55, 0.35)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(0, 0, 460, 0, Math.PI * 2);
+      ctx.stroke();
+      for (let m = 0; m < 60; m++) {
+        ctx.rotate((Math.PI * 2) / 60);
+        ctx.strokeStyle = m % 5 === 0 ? 'rgba(243, 229, 171, 0.8)' : 'rgba(255, 255, 255, 0.3)';
+        ctx.lineWidth = m % 5 === 0 ? 2 : 1;
+        ctx.beginPath();
+        ctx.moveTo(0, 450);
+        ctx.lineTo(0, 460);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      return new THREE.CanvasTexture(c);
+    }
+    const dialTexture = createGuillocheDialTexture();
+
+    // SOFT CONTACT SHADOW TEXTURE
+    function createContactShadowTexture() {
+      const c = document.createElement('canvas');
+      c.width = 512;
+      c.height = 512;
+      const ctx = c.getContext('2d');
+      const grad = ctx.createRadialGradient(256, 256, 20, 256, 256, 240);
+      grad.addColorStop(0, 'rgba(0, 0, 0, 0.88)');
+      grad.addColorStop(0.35, 'rgba(0, 0, 0, 0.55)');
+      grad.addColorStop(0.7, 'rgba(0, 0, 0, 0.18)');
+      grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 512, 512);
+      return new THREE.CanvasTexture(c);
+    }
+
+    // Physical Lighting Rigs
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.45);
+    scene.add(ambientLight);
+
+    const keyLight = new THREE.DirectionalLight(0xfff1d6, 2.8);
+    keyLight.position.set(5, 7, 6);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.width = 2048;
+    keyLight.shadow.mapSize.height = 2048;
+    keyLight.shadow.bias = -0.0001;
+    scene.add(keyLight);
+
+    const rimLight = new THREE.DirectionalLight(0x7df9ff, 1.8);
+    rimLight.position.set(-6, -4, 4);
+    scene.add(rimLight);
+
+    const specularFill = new THREE.PointLight(0xe0a96d, 1.5, 20);
+    specularFill.position.set(4, -3, 5);
+    scene.add(specularFill);
+
+    // Grounding Contact Shadow Plane
+    const shadowGeo = new THREE.PlaneGeometry(8, 8);
+    const shadowMat = new THREE.MeshBasicMaterial({
+      map: createContactShadowTexture(),
+      transparent: true,
+      depthWrite: false
+    });
+    const shadowMesh = new THREE.Mesh(shadowGeo, shadowMat);
+    shadowMesh.position.set(0, -0.2, -1.8);
+    scene.add(shadowMesh);
+
+    // Main Watch Movement Group
+    const watchGroup = new THREE.Group();
+    scene.add(watchGroup);
+
+    // =========================================================================
+    // PHOTOREALISTIC PBR LUXURY MATERIALS
+    // =========================================================================
+    const titaniumMat = new THREE.MeshStandardMaterial({
+      color: 0x22262d,
+      metalness: 0.92,
+      roughness: 0.22,
+      normalMap: brushedNormal,
+      normalScale: new THREE.Vector2(0.35, 0.35),
+      envMapIntensity: 1.4
+    });
+
+    const roseGoldMat = new THREE.MeshStandardMaterial({
+      color: 0xe0a96d,
+      metalness: 0.96,
+      roughness: 0.14,
+      normalMap: brushedNormal,
+      normalScale: new THREE.Vector2(0.2, 0.2),
+      envMapIntensity: 1.8
+    });
+
+    const champagneMat = new THREE.MeshStandardMaterial({
+      color: 0xf3d67b,
+      metalness: 0.98,
+      roughness: 0.10,
+      envMapIntensity: 2.0
+    });
+
+    const steelGearsMat = new THREE.MeshStandardMaterial({
+      color: 0xf0f3f8,
+      metalness: 0.98,
+      roughness: 0.08,
+      envMapIntensity: 1.9
+    });
+
+    const dialFaceMat = new THREE.MeshStandardMaterial({
+      map: dialTexture,
+      metalness: 0.75,
+      roughness: 0.28,
+      envMapIntensity: 1.2
+    });
+
+    const rubyMat = new THREE.MeshPhysicalMaterial({
+      color: 0xbe123c,
+      emissive: 0x4c0519,
+      metalness: 0.05,
+      roughness: 0.04,
+      transmission: 0.88,
+      ior: 1.76,
+      thickness: 0.8,
+      envMapIntensity: 1.5
+    });
+
+    const bluedSteelMat = new THREE.MeshStandardMaterial({
+      color: 0x1d4ed8,
+      metalness: 0.94,
+      roughness: 0.12,
+      envMapIntensity: 2.2
+    });
+
+    const sapphireMat = new THREE.MeshPhysicalMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.95,
+      roughness: 0.015,
+      metalness: 0.0,
+      transmission: 0.96,
+      ior: 1.77,
+      thickness: 0.4,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.03,
+      reflectivity: 0.95,
+      envMapIntensity: 1.6
+    });
+
+    // 1. Solid Fluted Outer Bezel in 18K Rose Gold with 72 Light-Catching Facets
+    const bezelGroup = new THREE.Group();
+    watchGroup.add(bezelGroup);
+
+    const bezelCoreGeo = new THREE.TorusGeometry(3.05, 0.16, 32, 96);
+    const bezelCore = new THREE.Mesh(bezelCoreGeo, roseGoldMat);
+    bezelGroup.add(bezelCore);
+
+    // 72 Fluted Micro-Reeded Teeth that reflect moving light
+    for (let f = 0; f < 72; f++) {
+      const fAngle = (f / 72) * Math.PI * 2;
+      const flutedGeo = new THREE.BoxGeometry(0.045, 0.14, 0.12);
+      const flutedMesh = new THREE.Mesh(flutedGeo, champagneMat);
+      flutedMesh.position.set(Math.sin(fAngle) * 3.12, Math.cos(fAngle) * 3.12, 0.04);
+      flutedMesh.rotation.z = -fAngle;
+      flutedMesh.rotation.x = 0.2;
+      bezelGroup.add(flutedMesh);
+    }
+
+    // 2. Guilloché Dial Plate with Applied Mirror-Faceted Hour Markers
+    const dialGeo = new THREE.CircleGeometry(2.95, 64);
+    const dialMesh = new THREE.Mesh(dialGeo, dialFaceMat);
+    dialMesh.position.z = -0.04;
+    watchGroup.add(dialMesh);
+
+    // Chapter Ring Chamfer
+    const chapterRingGeo = new THREE.RingGeometry(2.7, 2.95, 64);
+    const chapterRing = new THREE.Mesh(chapterRingGeo, titaniumMat);
+    chapterRing.position.z = -0.02;
+    watchGroup.add(chapterRing);
+
+    // Applied Multi-Faceted Gold Indices
+    for (let i = 0; i < 12; i++) {
+      const angle = (i / 12) * Math.PI * 2;
+      const isQuarter = i % 3 === 0;
+      const idxGroup = new THREE.Group();
+      
+      // Dual-facet bevel for razor-sharp dimensional glint
+      const facetGeo = new THREE.BoxGeometry(isQuarter ? 0.12 : 0.07, isQuarter ? 0.42 : 0.28, 0.08);
+      const facetMesh = new THREE.Mesh(facetGeo, isQuarter ? roseGoldMat : champagneMat);
+      facetMesh.rotation.y = 0.15;
+      idxGroup.add(facetMesh);
+
+      idxGroup.position.set(Math.sin(angle) * 2.62, Math.cos(angle) * 2.62, 0.04);
+      idxGroup.rotation.z = -angle;
+      watchGroup.add(idxGroup);
+    }
+
+    // 3. Central Caliber Skeleton Plate (Côtes de Genève Finish)
+    const plateGeo = new THREE.CylinderGeometry(2.4, 2.4, 0.14, 64);
+    const plateMesh = new THREE.Mesh(plateGeo, titaniumMat);
+    plateMesh.rotation.x = Math.PI / 2;
+    plateMesh.position.z = -0.22;
+    watchGroup.add(plateMesh);
+
+    // 4. Tourbillon Cage Sub-Assembly (Positioned at 6 o'clock)
+    const tourbillonGroup = new THREE.Group();
+    tourbillonGroup.position.set(0, -1.1, 0.1);
+    watchGroup.add(tourbillonGroup);
+
+    // Tourbillon Outer Carriage Ring (Dual Beveled)
+    const cageRingGeo = new THREE.TorusGeometry(0.85, 0.045, 20, 64);
+    const cageRing = new THREE.Mesh(cageRingGeo, roseGoldMat);
+    tourbillonGroup.add(cageRing);
+
+    // Tourbillon 3-Arm Lyre-Style Carriage Bridge
+    for (let i = 0; i < 3; i++) {
+      const armAngle = (i / 3) * Math.PI * 2;
+      const armGeo = new THREE.BoxGeometry(0.065, 0.82, 0.045);
+      const arm = new THREE.Mesh(armGeo, champagneMat);
+      arm.position.set(Math.sin(armAngle) * 0.4, Math.cos(armAngle) * 0.4, 0.02);
+      arm.rotation.z = -armAngle;
+      tourbillonGroup.add(arm);
+    }
+
+    // Oscillating Balance Wheel inside Tourbillon
+    const balanceGroup = new THREE.Group();
+    tourbillonGroup.add(balanceGroup);
+
+    const balanceGeo = new THREE.TorusGeometry(0.68, 0.038, 20, 64);
+    const balanceWheel = new THREE.Mesh(balanceGeo, champagneMat);
+    balanceGroup.add(balanceWheel);
+
+    // Balance Inertia Screws (Blued Steel & Gold)
+    for (let i = 0; i < 12; i++) {
+      const bAngle = (i / 12) * Math.PI * 2;
+      const screwGeo = new THREE.CylinderGeometry(0.032, 0.032, 0.07, 14);
+      const screw = new THREE.Mesh(screwGeo, i % 2 === 0 ? bluedSteelMat : roseGoldMat);
+      screw.position.set(Math.sin(bAngle) * 0.68, Math.cos(bAngle) * 0.68, 0);
+      screw.rotation.x = Math.PI / 2;
+      balanceGroup.add(screw);
+    }
+
+    // Synthetic Ruby Center Jewel (Facet Cut)
+    const rubyGeo = new THREE.CylinderGeometry(0.12, 0.09, 0.06, 16);
+    const centerRuby = new THREE.Mesh(rubyGeo, rubyMat);
+    centerRuby.rotation.x = Math.PI / 2;
+    centerRuby.position.set(0, 0, 0.07);
+    tourbillonGroup.add(centerRuby);
+
+    // 5. Interlocking Gear Train (Main Wheels with Cycloidal Teeth)
+    function createGear(radius, teeth, mat) {
+      const gearGroup = new THREE.Group();
+      const wheelGeo = new THREE.CylinderGeometry(radius, radius, 0.05, teeth);
+      const wheel = new THREE.Mesh(wheelGeo, mat);
+      wheel.rotation.x = Math.PI / 2;
+      gearGroup.add(wheel);
+
+      // Cutout Spokes
+      const rimGeo = new THREE.TorusGeometry(radius * 0.94, 0.035, 14, 48);
+      const rim = new THREE.Mesh(rimGeo, mat);
+      gearGroup.add(rim);
+
+      // 4 Internal Radiating Spokes
+      for (let s = 0; s < 4; s++) {
+        const spokeGeo = new THREE.BoxGeometry(0.04, radius * 1.8, 0.04);
+        const spoke = new THREE.Mesh(spokeGeo, mat);
+        spoke.rotation.z = (s / 4) * Math.PI;
+        gearGroup.add(spoke);
+      }
+
+      return gearGroup;
+    }
+
+    const gear1 = createGear(0.75, 32, steelGearsMat);
+    gear1.position.set(-0.8, 0.6, -0.05);
+    watchGroup.add(gear1);
+
+    const gear2 = createGear(0.6, 24, champagneMat);
+    gear2.position.set(0.7, 0.8, -0.02);
+    watchGroup.add(gear2);
+
+    const barrel = createGear(1.1, 48, titaniumMat);
+    barrel.position.set(0, 1.2, -0.1);
+    watchGroup.add(barrel);
+
+    // 6. Central Three-Dimensional Dauphine Hands (Dual-Faceted)
+    const handsGroup = new THREE.Group();
+    handsGroup.position.z = 0.28;
+    watchGroup.add(handsGroup);
+
+    function createDauphineHand(length, baseWidth, matLeft, matRight) {
+      const handGroup = new THREE.Group();
+      
+      // Left Bevel Facet
+      const leftGeo = new THREE.BufferGeometry();
+      const leftVerts = new Float32Array([
+        0, 0, 0.03,
+        -baseWidth, 0.3, 0.0,
+        0, length, 0.0
+      ]);
+      leftGeo.setAttribute('position', new THREE.BufferAttribute(leftVerts, 3));
+      leftGeo.computeVertexNormals();
+      const leftMesh = new THREE.Mesh(leftGeo, matLeft);
+      handGroup.add(leftMesh);
+
+      // Right Bevel Facet (catches light at contrasting angle)
+      const rightGeo = new THREE.BufferGeometry();
+      const rightVerts = new Float32Array([
+        0, 0, 0.03,
+        0, length, 0.0,
+        baseWidth, 0.3, 0.0
+      ]);
+      rightGeo.setAttribute('position', new THREE.BufferAttribute(rightVerts, 3));
+      rightGeo.computeVertexNormals();
+      const rightMesh = new THREE.Mesh(rightGeo, matRight);
+      handGroup.add(rightMesh);
+
+      return handGroup;
+    }
+
+    // Minute Hand (Long, Dual-Faceted 18K Rose Gold)
+    const minHand = createDauphineHand(2.1, 0.09, roseGoldMat, champagneMat);
+    const minPivot = new THREE.Group();
+    minPivot.add(minHand);
+    handsGroup.add(minPivot);
+
+    // Hour Hand (Shorter, Broader Dauphine)
+    const hrHand = createDauphineHand(1.4, 0.12, champagneMat, roseGoldMat);
+    const hrPivot = new THREE.Group();
+    hrPivot.add(hrHand);
+    handsGroup.add(hrPivot);
+
+    // Center Cap with Mirror-Polished Ruby Jewel
+    const capGeo = new THREE.CylinderGeometry(0.18, 0.18, 0.08, 32);
+    const cap = new THREE.Mesh(capGeo, roseGoldMat);
+    cap.rotation.x = Math.PI / 2;
+    handsGroup.add(cap);
+
+    const capJewel = new THREE.Mesh(new THREE.SphereGeometry(0.06, 16, 16), rubyMat);
+    capJewel.position.z = 0.06;
+    handsGroup.add(capJewel);
+
+    // 7. Domed Anti-Reflective Sapphire Crystal Lens
+    const sapphireGeo = new THREE.SphereGeometry(3.05, 48, 24, 0, Math.PI * 2, 0, Math.PI * 0.18);
+    const sapphireMesh = new THREE.Mesh(sapphireGeo, sapphireMat);
+    sapphireMesh.position.z = 0.1;
+    watchGroup.add(sapphireMesh);
+
+    // Master Animation Loop
+    let autoRotate = true;
+    let exploded = false;
+    let explodeAmount = 0;
+    let cadenceMultiplier = 1;
+
+    let targetRotX = 0.25;
+    let targetRotY = -0.3;
+    let isDragging = false;
+    let prevMouseX = 0, prevMouseY = 0;
+
+    container.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      prevMouseX = e.clientX;
+      prevMouseY = e.clientY;
+    });
+
+    window.addEventListener('mouseup', () => { isDragging = false; });
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      const dx = e.clientX - prevMouseX;
+      const dy = e.clientY - prevMouseY;
+      prevMouseX = e.clientX;
+      prevMouseY = e.clientY;
+
+      targetRotY += dx * 0.008;
+      targetRotX += dy * 0.008;
+    });
+
+    function renderLoop(time) {
+      const t = time * 0.001 * cadenceMultiplier;
+
+      // 1. Tourbillon continuous revolution (1 full turn per 60s)
+      tourbillonGroup.rotation.z = -t * 0.8;
+
+      // 2. High-Frequency Harmonic Balance Wheel Oscillation (4 Hz = 8 ticks/sec)
+      const balanceFreq = 8 * Math.PI; // 4 Hz sinusoidal vibration
+      balanceGroup.rotation.z = Math.sin(t * balanceFreq) * 1.4;
+
+      // 3. Interlocking Gear Rotations
+      gear1.rotation.z = t * 0.5;
+      gear2.rotation.z = -t * 0.65;
+      barrel.rotation.z = t * 0.1;
+
+      // 4. Minute & Hour Hands progression
+      minPivot.rotation.z = -t * 0.15;
+      hrPivot.rotation.z = -t * 0.015;
+
+      // 5. Auto-Rotation
+      if (autoRotate && !isDragging) {
+        targetRotY = Math.sin(t * 0.4) * 0.35;
+        targetRotX = 0.2 + Math.cos(t * 0.3) * 0.15;
+      }
+
+      watchGroup.rotation.y += (targetRotY - watchGroup.rotation.y) * 0.08;
+      watchGroup.rotation.x += (targetRotX - watchGroup.rotation.x) * 0.08;
+
+      // 6. Exploded Caliber Lerp
+      const targetExp = exploded ? 1 : 0;
+      explodeAmount += (targetExp - explodeAmount) * 0.1;
+
+      bezelGroup.position.z = explodeAmount * 1.5;
+      sapphireMesh.position.z = 0.1 + explodeAmount * 1.8;
+      handsGroup.position.z = 0.28 + explodeAmount * 1.1;
+      tourbillonGroup.position.z = 0.1 + explodeAmount * 0.6;
+      gear1.position.z = -0.05 - explodeAmount * 0.4;
+      gear2.position.z = -0.02 - explodeAmount * 0.3;
+      plateMesh.position.z = -0.22 - explodeAmount * 0.8;
+
+      renderer.render(scene, camera);
+      requestAnimationFrame(renderLoop);
+    }
+    requestAnimationFrame(renderLoop);
+
+    // Resize Handler
+    window.addEventListener('resize', () => {
+      camera.aspect = container.clientWidth / container.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth, container.clientHeight);
+    });
+
+    // Control Buttons
+    const btnOrbit = document.getElementById('btnOrbit');
+    const btnExplode = document.getElementById('btnExplode');
+    const btnTourbillonSpeed = document.getElementById('btnTourbillonSpeed');
+    const btnInspectMovement = document.getElementById('btnInspectMovement');
+
+    btnOrbit.addEventListener('click', () => {
+      autoRotate = !autoRotate;
+      btnOrbit.classList.toggle('active', autoRotate);
+    });
+
+    btnExplode.addEventListener('click', () => {
+      exploded = !exploded;
+      btnExplode.classList.toggle('active', exploded);
+    });
+
+    btnTourbillonSpeed.addEventListener('click', () => {
+      cadenceMultiplier = cadenceMultiplier === 1 ? 2 : 1;
+      btnTourbillonSpeed.classList.toggle('active', cadenceMultiplier === 2);
+      hudLiveFreq.textContent = cadenceMultiplier === 2 ? '57,600 VPH (OVERDRIVE)' : '28,800 VPH';
+    });
+
+    if (btnInspectMovement) {
+      btnInspectMovement.addEventListener('click', () => {
+        exploded = true;
+        btnExplode.classList.add('active');
+        document.getElementById('movement').scrollIntoView({ behavior: 'smooth' });
+      });
+    }
+
+    /* ========================================================================= */
+    /* 2. ATELIER DROPDOWN MENU TOGGLE                                           */
+    /* ========================================================================= */
+    const atelierBtn = document.getElementById('atelierBtn');
+    const atelierMenu = document.getElementById('atelierMenu');
+
+    atelierBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      atelierMenu.classList.toggle('active');
+    });
+
+    window.addEventListener('click', () => {
+      atelierMenu.classList.remove('active');
+    });
+
+    /* ========================================================================= */
+    /* 3. MAGNETIC CURSOR & DYNAMIC CARD MESH COORDINATES                        */
+    /* ========================================================================= */
+    const cursorRing = document.getElementById('cursorRing');
+    const cursorDot = document.getElementById('cursorDot');
+    let mX = -100, mY = -100;
+    let rX = -100, rY = -100;
+
+    window.addEventListener('mousemove', (e) => {
+      mX = e.clientX;
+      mY = e.clientY;
+
+      cursorDot.style.transform = `translate(${mX}px, ${mY}px)`;
+
+      // Dynamic ambient mesh variables
+      const pctX = (mX / window.innerWidth) * 100;
+      const pctY = (mY / window.innerHeight) * 100;
+      document.getElementById('ambientMesh').style.setProperty('--mesh-x', `${pctX}%`);
+      document.getElementById('ambientMesh').style.setProperty('--mesh-y', `${pctY}%`);
+
+      // Card radial glow coordinates
+      document.querySelectorAll('.timepiece-card').forEach(card => {
+        const rect = card.getBoundingClientRect();
+        card.style.setProperty('--card-mouse-x', `${mX - rect.left}px`);
+        card.style.setProperty('--card-mouse-y', `${mY - rect.top}px`);
+      });
+    });
+
+    function cursorTick() {
+      rX += (mX - rX) * 0.18;
+      rY += (mY - rY) * 0.18;
+      cursorRing.style.transform = `translate(${rX}px, ${rY}px)`;
+      requestAnimationFrame(cursorTick);
+    }
+    requestAnimationFrame(cursorTick);
+
+  </script>
+<div class="study-credit" style="position:fixed;left:12px;bottom:10px;z-index:99999;max-width:calc(100vw - 24px);padding:5px 10px;font:500 11px/1.3 system-ui,sans-serif;letter-spacing:.02em;color:#e8e8e8;background:rgba(0,0,0,.72);border:1px solid rgba(255,255,255,.18);border-radius:4px;pointer-events:none">Study build, design credit: Alex Carter / BoostStash</div>
+</body>
+</html>

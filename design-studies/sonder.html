@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SONDER & CO. — Private Wealth & Family Office // Zurich & Geneva</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  
+  <!-- Three.js r128 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <style>
+    :root {
+      --bg-green-void: #091210;
+      --bg-surface: rgba(15, 27, 24, 0.7);
+      --bg-elevated: rgba(22, 38, 34, 0.85);
+      --champagne-gold: #f3e8c8;
+      --gold-primary: #d4af37;
+      --silver-accent: #c0c5c4;
+      --emerald-subtle: #1e3b33;
+      --border-hairline: rgba(243, 232, 200, 0.12);
+      --border-accent: rgba(212, 175, 55, 0.35);
+      --text-primary: #fcfcfd;
+      --text-secondary: rgba(252, 252, 253, 0.68);
+      --text-muted: rgba(252, 252, 253, 0.4);
+      --radius-sm: 6px;
+      --radius-md: 12px;
+      --radius-lg: 24px;
+      --radius-pill: 9999px;
+      --transition-spring: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background-color: var(--bg-green-void);
+      color: var(--text-primary);
+      font-family: 'Inter', -apple-system, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    .ambient-vault-mesh {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background: radial-gradient(circle at 35% 25%, rgba(212, 175, 55, 0.08) 0%, transparent 60%),
+                  radial-gradient(circle at 75% 75%, rgba(30, 59, 51, 0.6) 0%, transparent 60%),
+                  radial-gradient(circle at 50% 50%, rgba(9, 18, 16, 0.9) 0%, transparent 80%);
+      pointer-events: none;
+    }
+
+    .grain-overlay {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.04;
+      mix-blend-mode: overlay;
+    }
+
+    .cursor-ring {
+      position: fixed;
+      width: 32px;
+      height: 32px;
+      border: 1px solid rgba(243, 232, 200, 0.45);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 10000;
+      transform: translate(-50%, -50%);
+      will-change: transform;
+    }
+
+    .cursor-dot {
+      position: fixed;
+      width: 4px;
+      height: 4px;
+      background: var(--champagne-gold);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 10001;
+      transform: translate(-50%, -50%);
+      will-change: transform;
+    }
+
+    /* Header */
+    header {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 64px);
+      max-width: 1320px;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 28px;
+      background: rgba(12, 22, 19, 0.78);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-hairline);
+      border-radius: var(--radius-pill);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .brand-mark-group {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .brand-monogram {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1px solid var(--gold-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--champagne-gold);
+    }
+
+    .brand-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 21px;
+      letter-spacing: 0.18em;
+      font-weight: 400;
+      text-transform: uppercase;
+      color: var(--text-primary);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      list-style: none;
+    }
+
+    .nav-link {
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: color 0.25s ease;
+    }
+
+    .nav-link:hover {
+      color: var(--champagne-gold);
+    }
+
+    /* Switcher Dropdown */
+    .atelier-switcher {
+      position: relative;
+    }
+
+    .atelier-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-hairline);
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      color: var(--champagne-gold);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      cursor: pointer;
+    }
+
+    .atelier-menu {
+      position: absolute;
+      top: calc(100% + 12px);
+      right: 0;
+      width: 240px;
+      background: rgba(14, 25, 22, 0.96);
+      backdrop-filter: blur(24px);
+      border: 1px solid var(--border-hairline);
+      border-radius: var(--radius-md);
+      padding: 8px;
+      display: none;
+      flex-direction: column;
+      gap: 4px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+      z-index: 200;
+    }
+
+    .atelier-menu.active {
+      display: flex;
+    }
+
+    .atelier-item {
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      transition: all 0.2s ease;
+    }
+
+    .atelier-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
+    }
+
+    .atelier-item.current {
+      background: rgba(212, 175, 55, 0.15);
+      border-left: 2px solid var(--gold-primary);
+      color: var(--champagne-gold);
+    }
+
+    /* Hero */
+    .hero-section {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 140px 48px 60px;
+      max-width: 1440px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 10;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 60px;
+      align-items: center;
+      width: 100%;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      background: rgba(212, 175, 55, 0.1);
+      border: 1px solid var(--border-accent);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--champagne-gold);
+      margin-bottom: 24px;
+    }
+
+    .hero-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(48px, 6vw, 76px);
+      font-weight: 300;
+      line-height: 1.02;
+      letter-spacing: -0.01em;
+      color: var(--text-primary);
+      margin-bottom: 24px;
+    }
+
+    .hero-title em {
+      font-style: italic;
+      color: var(--champagne-gold);
+      font-weight: 400;
+    }
+
+    .hero-desc {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.8;
+      max-width: 520px;
+      font-weight: 300;
+      margin-bottom: 32px;
+    }
+
+    .btn-gold {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(135deg, var(--gold-primary), #8a6c1e);
+      color: #070e0c;
+      font-family: 'Inter', sans-serif;
+      font-size: 12.5px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 14px 32px;
+      border-radius: var(--radius-pill);
+      text-decoration: none;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(212, 175, 55, 0.25);
+      transition: all 0.3s var(--transition-spring);
+    }
+
+    .btn-gold:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 28px rgba(212, 175, 55, 0.4);
+      background: linear-gradient(135deg, var(--champagne-gold), var(--gold-primary));
+    }
+
+    /* 3D Kinetic Vault Globe Stage */
+    .vault-stage-container {
+      position: relative;
+      width: 100%;
+      height: 560px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .stage-hud-overlay {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      right: 20px;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .hud-chip {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      background: rgba(15, 27, 24, 0.7);
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-hairline);
+      backdrop-filter: blur(12px);
+      color: var(--champagne-gold);
+    }
+
+    /* Telemetry Strip */
+    .telemetry-strip {
+      border-top: 1px solid var(--border-hairline);
+      border-bottom: 1px solid var(--border-hairline);
+      background: rgba(12, 22, 19, 0.6);
+      backdrop-filter: blur(16px);
+      padding: 36px 48px;
+      margin: 40px auto 100px;
+      max-width: 1440px;
+    }
+
+    .telemetry-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 32px;
+    }
+
+    .telemetry-metric {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      border-left: 1px solid var(--border-hairline);
+      padding-left: 24px;
+    }
+
+    .metric-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: clamp(24px, 2.5vw, 32px);
+      font-weight: 400;
+      color: var(--text-primary);
+    }
+
+    .metric-label {
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--gold-primary);
+    }
+
+    .metric-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border-hairline);
+      background: #060c0a;
+      padding: 80px 48px 40px;
+      max-width: 1440px;
+      margin: 0 auto;
+    }
+
+    .footer-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 32px;
+      border-top: 1px solid var(--border-hairline);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+  
+@media (max-width: 860px) {
+  html, body { overflow-x: hidden !important; width: 100% !important; max-width: 100% !important; }
+  header { padding: 14px 20px !important; box-sizing: border-box !important; width: 100% !important; }
+  .nav-links { display: none !important; }
+  .hero-section { padding: 90px 20px 40px !important; min-height: auto !important; box-sizing: border-box !important; width: 100% !important; }
+  .hero-grid { grid-template-columns: 1fr !important; gap: 32px !important; width: 100% !important; }
+  .hero-title { font-size: clamp(34px, 8vw, 48px) !important; }
+  .pavilion-stage-container, .timepiece-stage, .olfactory-stage, .stage-container, .sonder-stage { height: 340px !important; width: 100% !important; max-width: 100% !important; box-sizing: border-box !important; }
+  .stage-hud-overlay { top: 10px !important; left: 10px !important; right: 10px !important; }
+  .hud-chip { font-size: 9px !important; padding: 4px 8px !important; }
+  .solar-slider-bar { bottom: 10px !important; left: 10px !important; right: 10px !important; padding: 6px 12px !important; box-sizing: border-box !important; }
+  .solar-label { font-size: 9.5px !important; }
+  .telemetry-grid { grid-template-columns: 1fr 1fr !important; gap: 16px !important; width: 100% !important; }
+  .project-grid, .timepiece-grid, .craft-grid, .footer-grid { grid-template-columns: 1fr !important; gap: 24px !important; width: 100% !important; }
+  section, .container, .monograph-section, .collection-section, .craft-section, .pyramid-section, .studio-section { padding-inline: 20px !important; max-width: 100% !important; box-sizing: border-box !important; }
+  footer { padding: 36px 20px !important; box-sizing: border-box !important; width: 100% !important; }
+}
+
+</style>
+</head>
+<body>
+
+  <div class="ambient-vault-mesh"></div>
+
+  <svg class="grain-overlay">
+    <filter id="noise">
+      <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch" />
+    </filter>
+    <rect width="100%" height="100%" filter="url(#noise)" />
+  </svg>
+
+  <div class="cursor-ring" id="cursorRing"></div>
+  <div class="cursor-dot" id="cursorDot"></div>
+
+  <header>
+    <a href="#" class="brand-mark-group">
+      <div class="brand-monogram">SC</div>
+      <div class="brand-name">SONDER & CO.</div>
+    </a>
+
+    <ul class="nav-links">
+      <li><a href="#custody" class="nav-link">Sovereign Custody</a></li>
+      <li><a href="#succession" class="nav-link">Succession</a></li>
+      <li><a href="#allocations" class="nav-link">Global Allocations</a></li>
+      <li><a href="#advisory" class="nav-link">Family Office</a></li>
+    </ul>
+
+    <div class="atelier-switcher">
+      <button class="atelier-btn" id="atelierBtn">
+        <span>COLLECTIONS</span>
+        <svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.2"/></svg>
+      </button>
+
+      <div class="atelier-menu" id="atelierMenu">
+        <a href="nocturnal.html" class="atelier-item">
+          <span>Noc-Turnal</span>
+          <span>Haute Horlogerie Atelier</span>
+        </a>
+        <a href="aetheria.html" class="atelier-item">
+          <span>Aetheria</span>
+          <span>Spatial & Architecture</span>
+        </a>
+        <a href="vespera.html" class="atelier-item">
+          <span>Vespera</span>
+          <span>Haute Parfumerie</span>
+        </a>
+        <a href="sonder.html" class="atelier-item current">
+          <span>Sonder & Co.</span>
+          <span>Private Wealth & Family Office</span>
+        </a>
+        <a href="../animation-methodologies-lab/index.html" class="atelier-item">
+          <span>Benchmark Suite</span>
+          <span>Mika OS Methodologies</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-grid">
+      <div>
+        <div class="hero-badge">ZURICH // BAHNHOFSTRASSE PRIVATE OFFICE</div>
+        <h1 class="hero-title">
+          Guarding capital across<br><em>entire generations</em>.
+        </h1>
+        <p class="hero-desc">
+          Bespoke multi-family office advisory, cryptographic sovereign vault custody, and cross-border succession architecture designed to endure for over a century.
+        </p>
+        <a href="#custody" class="btn-gold">Private Consultation</a>
+      </div>
+
+      <div class="vault-stage-container" id="vaultStage">
+        <div class="stage-hud-overlay">
+          <span class="hud-chip">SWISS VAULT ALLOCATION</span>
+          <span class="hud-chip">TIER-4 ENCRYPTED</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Telemetry Strip -->
+  <section class="telemetry-strip" id="custody">
+    <div class="telemetry-grid">
+      <div class="telemetry-metric">
+        <div class="metric-value">€4.2 B</div>
+        <div class="metric-label">FIDUCIARY AUM</div>
+        <div class="metric-sub">Privately held across family endowments, sovereign real estate, and physical gold.</div>
+      </div>
+
+      <div class="telemetry-metric">
+        <div class="metric-value">100+ YRS</div>
+        <div class="metric-label">SUCCESSION HORIZON</div>
+        <div class="metric-sub">Perpetual trust governance insulated from jurisdictional shifts.</div>
+      </div>
+
+      <div class="telemetry-metric">
+        <div class="metric-value">99.98 %</div>
+        <div class="metric-label">CAPITAL RETENTION</div>
+        <div class="metric-sub">Multi-generational preservation through defensive volatility hedging.</div>
+      </div>
+
+      <div class="telemetry-metric">
+        <div class="metric-value">4 CITIES</div>
+        <div class="metric-label">GLOBAL VAULTS</div>
+        <div class="metric-sub">Zurich, Geneva, London, and Singapore sovereign physical vaults.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer id="advisory">
+    <div class="footer-bottom">
+      <span>© 2026 SONDER & CO. BANQUIERS PRIVÉS SA. ZURICH // 47°22'N 8°32'E</span>
+      <span>Private client register (demo)</span>
+    </div>
+  </footer>
+
+  <!-- 3D Kinetic Vault Globe Script -->
+  <script>
+    const stage = document.getElementById('vaultStage');
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(40, stage.clientWidth / stage.clientHeight, 0.1, 100);
+    camera.position.set(0, 0, 7.5);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+    renderer.setSize(stage.clientWidth, stage.clientHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.32;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    stage.appendChild(renderer.domElement);
+
+    // =========================================================================
+    // DYNAMIC SWISS VAULT STUDIO HDRI REFLECTION ENVIRONMENT
+    // =========================================================================
+    function createVaultStudioEnvironment(glRenderer) {
+      const pmrem = new THREE.PMREMGenerator(glRenderer);
+      pmrem.compileEquirectangularShader();
+
+      const c = document.createElement('canvas');
+      c.width = 1024;
+      c.height = 512;
+      const ctx = c.getContext('2d');
+
+      // Deep British racing green & dark vault slate backdrop
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, 512);
+      bgGrad.addColorStop(0, '#06110e');
+      bgGrad.addColorStop(0.35, '#0a1a15');
+      bgGrad.addColorStop(0.7, '#040907');
+      bgGrad.addColorStop(1, '#020403');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, 1024, 512);
+
+      // Studio Softbox 1: Champagne Gold Key Light (Top-Left 45°)
+      const keySoftbox = ctx.createRadialGradient(280, 130, 10, 280, 130, 180);
+      keySoftbox.addColorStop(0, 'rgba(255, 248, 225, 1.0)');
+      keySoftbox.addColorStop(0.3, 'rgba(243, 214, 123, 0.85)');
+      keySoftbox.addColorStop(0.7, 'rgba(180, 130, 30, 0.3)');
+      keySoftbox.addColorStop(1, 'rgba(180, 130, 30, 0)');
+      ctx.fillStyle = keySoftbox;
+      ctx.fillRect(80, 0, 400, 280);
+
+      // Studio Softbox 2: Cool Emerald-Cyan Rim Strip Light (Top-Right 135°)
+      const rimSoftbox = ctx.createLinearGradient(720, 30, 880, 240);
+      rimSoftbox.addColorStop(0, 'rgba(210, 255, 240, 0.95)');
+      rimSoftbox.addColorStop(0.4, 'rgba(52, 211, 153, 0.55)');
+      rimSoftbox.addColorStop(1, 'rgba(52, 211, 153, 0)');
+      ctx.fillStyle = rimSoftbox;
+      ctx.fillRect(700, 20, 220, 240);
+
+      // Overhead Soft Diffusion Skylight
+      const topSkylight = ctx.createRadialGradient(512, 40, 10, 512, 40, 300);
+      topSkylight.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+      topSkylight.addColorStop(0.5, 'rgba(255, 255, 255, 0.25)');
+      topSkylight.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      ctx.fillStyle = topSkylight;
+      ctx.fillRect(180, 0, 664, 160);
+
+      const texture = new THREE.CanvasTexture(c);
+      texture.mapping = THREE.EquirectangularReflectionMapping;
+      const envMap = pmrem.fromEquirectangular(texture).texture;
+      texture.dispose();
+      pmrem.dispose();
+      return envMap;
+    }
+
+    const vaultEnv = createVaultStudioEnvironment(renderer);
+    scene.environment = vaultEnv;
+
+    // Soft Ground Contact Shadow
+    function createVaultShadowTexture() {
+      const c = document.createElement('canvas');
+      c.width = 512;
+      c.height = 512;
+      const ctx = c.getContext('2d');
+      const grad = ctx.createRadialGradient(256, 256, 15, 256, 256, 240);
+      grad.addColorStop(0, 'rgba(0, 0, 0, 0.90)');
+      grad.addColorStop(0.35, 'rgba(0, 0, 0, 0.55)');
+      grad.addColorStop(0.7, 'rgba(0, 0, 0, 0.15)');
+      grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 512, 512);
+      return new THREE.CanvasTexture(c);
+    }
+
+    const shadowPlane = new THREE.Mesh(
+      new THREE.PlaneGeometry(7.5, 7.5),
+      new THREE.MeshBasicMaterial({ map: createVaultShadowTexture(), transparent: true, depthWrite: false })
+    );
+    shadowPlane.position.set(0, -2.6, -0.5);
+    shadowPlane.rotation.x = -Math.PI / 2.2;
+    scene.add(shadowPlane);
+
+    // Studio Physical Lighting
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
+
+    const keyLight = new THREE.DirectionalLight(0xfff5db, 3.0);
+    keyLight.position.set(5, 7, 5);
+    keyLight.castShadow = true;
+    scene.add(keyLight);
+
+    const rimLight = new THREE.DirectionalLight(0x34d399, 2.2);
+    rimLight.position.set(-6, -4, 3);
+    scene.add(rimLight);
+
+    // Vault Kinetic Group
+    const vaultGroup = new THREE.Group();
+    scene.add(vaultGroup);
+
+    // =========================================================================
+    // PHOTOREALISTIC PBR METALLURGY MATERIALS
+    // =========================================================================
+    const sovereignGoldMat = new THREE.MeshStandardMaterial({
+      color: 0xf3d67b,
+      metalness: 0.98,
+      roughness: 0.10,
+      envMapIntensity: 2.4
+    });
+
+    const brushedTitaniumMat = new THREE.MeshStandardMaterial({
+      color: 0x242a2e,
+      metalness: 0.92,
+      roughness: 0.24,
+      envMapIntensity: 1.6
+    });
+
+    const hardenedSteelMat = new THREE.MeshStandardMaterial({
+      color: 0xe2e8f0,
+      metalness: 0.97,
+      roughness: 0.08,
+      envMapIntensity: 2.2
+    });
+
+    const sapphireBearingMat = new THREE.MeshPhysicalMaterial({
+      color: 0x0284c7,
+      emissive: 0x0369a1,
+      emissiveIntensity: 0.2,
+      transmission: 0.88,
+      transparent: true,
+      roughness: 0.04,
+      ior: 1.77,
+      thickness: 0.6,
+      envMapIntensity: 1.8
+    });
+
+    // 1. Heavy Outer Titanium Vault Armillary Ring with 48 Gear Locking Lugs
+    const ring1Group = new THREE.Group();
+    vaultGroup.add(ring1Group);
+
+    const ring1Core = new THREE.Mesh(new THREE.TorusGeometry(2.5, 0.08, 24, 96), brushedTitaniumMat);
+    ring1Group.add(ring1Core);
+
+    // 48 Outer Gear Locking Lugs
+    for (let g = 0; g < 48; g++) {
+      const gAngle = (g / 48) * Math.PI * 2;
+      const lug = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.12, 0.09), hardenedSteelMat);
+      lug.position.set(Math.sin(gAngle) * 2.58, Math.cos(gAngle) * 2.58, 0);
+      lug.rotation.z = -gAngle;
+      ring1Group.add(lug);
+    }
+
+    // 2. Middle 18K Sovereign Gold Gimbal Ring (Angled Axis)
+    const ring2Group = new THREE.Group();
+    ring2Group.rotation.x = Math.PI / 3;
+    vaultGroup.add(ring2Group);
+
+    const ring2Core = new THREE.Mesh(new THREE.TorusGeometry(2.0, 0.065, 20, 80), sovereignGoldMat);
+    ring2Group.add(ring2Core);
+
+    // 24 Dial Calibration Bevel Marks
+    for (let d = 0; d < 24; d++) {
+      const dAngle = (d / 24) * Math.PI * 2;
+      const mark = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.08, 0.06), hardenedSteelMat);
+      mark.position.set(Math.sin(dAngle) * 2.05, Math.cos(dAngle) * 2.05, 0);
+      mark.rotation.z = -dAngle;
+      ring2Group.add(mark);
+    }
+
+    // 3. Inner Equatorial Gold Ring
+    const ring3Group = new THREE.Group();
+    ring3Group.rotation.y = Math.PI / 4;
+    vaultGroup.add(ring3Group);
+
+    const ring3Core = new THREE.Mesh(new THREE.TorusGeometry(1.5, 0.05, 18, 64), sovereignGoldMat);
+    ring3Group.add(ring3Core);
+
+    // 4. Central Faceted Sovereign Gold Bullion Dodecahedron Core
+    const coreGeo = new THREE.DodecahedronGeometry(0.88, 0);
+    const coreMesh = new THREE.Mesh(coreGeo, sovereignGoldMat);
+    vaultGroup.add(coreMesh);
+
+    // Inner Steel Cryptographic Core Cage
+    const cageGeo = new THREE.IcosahedronGeometry(0.96, 1);
+    const cageMat = new THREE.MeshStandardMaterial({
+      color: 0x091210,
+      wireframe: true,
+      metalness: 0.9,
+      roughness: 0.1
+    });
+    const cageMesh = new THREE.Mesh(cageGeo, cageMat);
+    vaultGroup.add(cageMesh);
+
+    // 5. 6 Orbital Planetary Nodes with Sapphire Jewel Bearings
+    const nodesGroup = new THREE.Group();
+    vaultGroup.add(nodesGroup);
+
+    for (let i = 0; i < 6; i++) {
+      const angle = (i / 6) * Math.PI * 2;
+      const nodeSubGroup = new THREE.Group();
+
+      const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.06, 16), sovereignGoldMat);
+      collar.rotation.x = Math.PI / 2;
+      nodeSubGroup.add(collar);
+
+      const jewel = new THREE.Mesh(new THREE.SphereGeometry(0.09, 16, 16), sapphireBearingMat);
+      nodeSubGroup.add(jewel);
+
+      nodeSubGroup.position.set(Math.sin(angle) * 2.5, Math.cos(angle) * 2.5, 0);
+      nodesGroup.add(nodeSubGroup);
+    }
+
+    // Interactive Drag Orbit & Kinetic Motion Loop
+    let isDragging = false;
+    let prevMouseX = 0, prevMouseY = 0;
+    let targetRotX = 0.2, targetRotY = -0.3;
+
+    stage.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      prevMouseX = e.clientX;
+      prevMouseY = e.clientY;
+    });
+
+    window.addEventListener('mouseup', () => { isDragging = false; });
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      const dx = e.clientX - prevMouseX;
+      const dy = e.clientY - prevMouseY;
+      prevMouseX = e.clientX;
+      prevMouseY = e.clientY;
+      targetRotY += dx * 0.008;
+      targetRotX += dy * 0.008;
+    });
+
+    function render(time) {
+      const t = time * 0.001;
+
+      // Concentric Counter-Rotations
+      ring1Group.rotation.z = t * 0.25;
+      ring2Group.rotation.z = -t * 0.35;
+      ring3Group.rotation.x = t * 0.45;
+      coreMesh.rotation.y = t * 0.5;
+      coreMesh.rotation.x = Math.sin(t * 0.6) * 0.3;
+      nodesGroup.rotation.z = t * 0.15;
+
+      if (!isDragging) {
+        targetRotY = Math.sin(t * 0.35) * 0.35;
+        targetRotX = 0.15 + Math.cos(t * 0.25) * 0.15;
+      }
+
+      vaultGroup.rotation.y += (targetRotY - vaultGroup.rotation.y) * 0.06;
+      vaultGroup.rotation.x += (targetRotX - vaultGroup.rotation.x) * 0.06;
+      vaultGroup.position.y = Math.sin(t * 1.1) * 0.06;
+
+      renderer.render(scene, camera);
+      requestAnimationFrame(render);
+    }
+    requestAnimationFrame(render);
+
+    // Switcher & Cursor
+    const atelierBtn = document.getElementById('atelierBtn');
+    const atelierMenu = document.getElementById('atelierMenu');
+    atelierBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      atelierMenu.classList.toggle('active');
+    });
+    window.addEventListener('click', () => { atelierMenu.classList.remove('active'); });
+
+    const cursorRing = document.getElementById('cursorRing');
+    const cursorDot = document.getElementById('cursorDot');
+    let mX = -100, mY = -100, rX = -100, rY = -100;
+    window.addEventListener('mousemove', (e) => {
+      mX = e.clientX;
+      mY = e.clientY;
+      cursorDot.style.transform = `translate(${mX}px, ${mY}px)`;
+    });
+    function cursorLoop() {
+      rX += (mX - rX) * 0.18;
+      rY += (mY - rY) * 0.18;
+      cursorRing.style.transform = `translate(${rX}px, ${rY}px)`;
+      requestAnimationFrame(cursorLoop);
+    }
+    requestAnimationFrame(cursorLoop);
+  </script>
+<div class="study-credit" style="position:fixed;left:12px;bottom:10px;z-index:99999;max-width:calc(100vw - 24px);padding:5px 10px;font:500 11px/1.3 system-ui,sans-serif;letter-spacing:.02em;color:#e8e8e8;background:rgba(0,0,0,.72);border:1px solid rgba(255,255,255,.18);border-radius:4px;pointer-events:none">Study build, design credit: Alex Carter / BoostStash</div>
+</body>
+</html>

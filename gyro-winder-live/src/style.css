@@ -1,0 +1,46 @@
+
+/* Layout: one fixed canvas behind; five normal HTML sections scroll over it (hero, close-up, apart, around, back together).
+   Single dark theme on purpose: the object is lit by a dark studio. */
+:root { color-scheme: dark; --bg:#0b0c0e; --fg:#eeece6; --fg2:#c3c5ca; --muted:#8b8e95; --line:rgba(255,255,255,.12); --amber:#ff9d42;
+  --f:"Schibsted Grotesk","Segoe UI",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,Consolas,monospace; }
+* { box-sizing: border-box; }
+html { background: var(--bg); }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.55 var(--f); }
+main { position: relative; overflow-x: clip; }                 /* clip, never hidden: hidden breaks sticky */
+#c { position: fixed; inset: 0; width: 100%; height: 100%; display: block; z-index: 0; }
+.story { position: relative; z-index: 10; pointer-events: none; }
+section { min-height: 100svh; display: flex; align-items: center; padding: 0 max(24px, 6vw); }
+.copy { max-width: 400px; pointer-events: auto; }
+.k { font: 700 11px var(--mono); letter-spacing: .16em; text-transform: uppercase; color: var(--amber); }
+h1 { font-size: clamp(40px, 6vw, 76px); line-height: .98; letter-spacing: -.035em; margin: 12px 0 14px; }
+h2 { font-size: clamp(28px, 3.4vw, 44px); line-height: 1.04; letter-spacing: -.025em; margin: 10px 0 12px; }
+.copy p { color: var(--fg2); margin: 0; }
+.right { justify-content: flex-end; } .right .copy { text-align: left; }
+.low { align-items: flex-end; padding-bottom: 9svh; }
+/* labels for the exploded view: two clean columns with leader lines */
+#labels { position: fixed; inset: 0; z-index: 5; pointer-events: none; }
+#labels svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.lab { position: absolute; font: 500 12px/1.35 var(--mono); color: var(--fg2); white-space: nowrap; }
+.lab b { display: block; color: var(--fg); font: 600 14px/1.3 var(--f); }
+/* controls */
+.ctl { position: fixed; z-index: 20; right: max(16px, 3vw); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); display: flex; gap: 10px; align-items: center; }
+.hold { position: relative; width: 132px; height: 52px; border-radius: 26px; border: 1px solid var(--line); background: rgba(18,20,24,.82); color: var(--fg); font: 700 12px var(--mono); letter-spacing: .06em; cursor: pointer; -webkit-user-select: none; user-select: none; touch-action: none; backdrop-filter: blur(8px); }
+.hold svg { position: absolute; left: 8px; top: 50%; transform: translateY(-50%) rotate(-90deg); }
+.hold span { padding-left: 26px; }
+.tog { height: 52px; padding: 0 16px; border-radius: 26px; border: 1px solid var(--line); background: rgba(18,20,24,.82); color: var(--fg2); font: 700 12px var(--mono); cursor: pointer; backdrop-filter: blur(8px); }
+.tog[aria-pressed="true"] { color: var(--bg); background: var(--amber); border-color: var(--amber); }
+.hold:focus-visible, .tog:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
+#load { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; background: var(--bg); font: 700 11px var(--mono); letter-spacing: .16em; color: var(--muted); transition: opacity .6s; }
+.note { font: 500 11px/1.5 var(--mono); color: var(--muted); margin-top: 18px !important; }
+@media (max-width: 760px) {
+  section { align-items: flex-end; padding: 0 18px 22svh; }
+  .right { justify-content: flex-start; }
+  .copy { background: linear-gradient(180deg, rgba(11,12,14,0), rgba(11,12,14,.85) 18%); padding-top: 24px; }
+  .lab { font-size: 10.5px; } .lab b { font-size: 12px; } .lab .d { display: none; }
+  .hold { width: 120px; }
+}
+
+/* extras added in the port */
+#fps { position: fixed; z-index: 40; left: 8px; top: 8px; padding: 6px 9px; border-radius: 6px; background: rgba(0,0,0,.72); color: #9dff9d; font: 700 12px/1.4 var(--mono); white-space: pre; pointer-events: none; }
+#nogl { position: fixed; inset: 0; z-index: 25; display: none; place-items: end center; padding: 0 24px 14svh; text-align: center; color: var(--muted); font: 500 13px/1.5 var(--mono); pointer-events: none; }
+.nogl #nogl { display: grid; }

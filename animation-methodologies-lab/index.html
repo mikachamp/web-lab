@@ -1,0 +1,1599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Animation & 3D Methodologies Benchmark Lab — Mika OS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  
+  <!-- Three.js r128 standalone -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <style>
+    :root {
+      --bg-void: #08080a;
+      --bg-surface: rgba(18, 18, 22, 0.75);
+      --bg-surface-elevated: rgba(28, 28, 34, 0.85);
+      --border-hairline: rgba(255, 255, 255, 0.08);
+      --border-accent: rgba(212, 175, 55, 0.35);
+      --gold-accent: #d4af37;
+      --gold-light: #f3e5ab;
+      --cyan-accent: #00d4ff;
+      --text-primary: #f5f5f7;
+      --text-secondary: rgba(245, 245, 247, 0.65);
+      --text-muted: rgba(245, 245, 247, 0.38);
+      --radius-sm: 6px;
+      --radius-md: 12px;
+      --radius-lg: 20px;
+      --radius-pill: 9999px;
+      --transition-spring: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background-color: var(--bg-void);
+      color: var(--text-primary);
+      font-family: 'Inter', -apple-system, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* SVG Grain Overlay (MotionSites / Luxury Pillar 3) */
+    .grain-overlay {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 999;
+      opacity: 0.04;
+      mix-blend-mode: overlay;
+      transition: opacity 0.3s ease;
+    }
+
+    /* Ambient Dynamic Mesh Background (Methodology C) */
+    .ambient-mesh {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background: radial-gradient(circle at var(--mesh-x, 30%) var(--mesh-y, 25%), rgba(212, 175, 55, 0.08) 0%, transparent 60%),
+                  radial-gradient(circle at 80% 75%, rgba(0, 212, 255, 0.05) 0%, transparent 55%),
+                  radial-gradient(circle at 50% 50%, rgba(124, 58, 237, 0.04) 0%, transparent 70%);
+      pointer-events: none;
+      transition: background 0.8s ease;
+    }
+
+    /* Main Container */
+    .app-shell {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 24px 32px 60px;
+    }
+
+    /* Header & Navigation */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border-hairline);
+      margin-bottom: 32px;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(0, 212, 255, 0.2));
+      border: 1px solid var(--border-accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--gold-light);
+    }
+
+    .brand-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 26px;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      color: var(--text-primary);
+    }
+
+    .brand-subtitle {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.25em;
+      color: var(--gold-accent);
+    }
+
+    /* Live Telemetry Bar */
+    .telemetry-bar {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text-secondary);
+      background: rgba(18, 18, 22, 0.6);
+      padding: 8px 18px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-hairline);
+      backdrop-filter: blur(12px);
+    }
+
+    .telemetry-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-led {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #00ffaa;
+      box-shadow: 0 0 8px #00ffaa;
+      animation: pulse-led 2s infinite ease-in-out;
+    }
+
+    @keyframes pulse-led {
+      0%, 100% { opacity: 0.6; transform: scale(0.9); }
+      50% { opacity: 1; transform: scale(1.1); }
+    }
+
+    /* Interactive Methodology Selector Tabs (FLIP Layout) */
+    .methodology-tabs {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      position: relative;
+      background: rgba(14, 14, 18, 0.9);
+      padding: 5px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-hairline);
+      margin-bottom: 32px;
+      gap: 4px;
+      backdrop-filter: blur(16px);
+      width: 100%;
+    }
+
+    .tab-btn {
+      position: relative;
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      padding: 10px 12px;
+      font-family: 'Inter', sans-serif;
+      font-size: 12.5px;
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: var(--radius-pill);
+      transition: color 0.25s ease;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-primary);
+    }
+
+    .tab-btn.active {
+      color: #fff;
+    }
+
+    .tab-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: var(--radius-pill);
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+    }
+
+    .tab-btn.active .tab-badge {
+      background: rgba(212, 175, 55, 0.25);
+      color: var(--gold-light);
+    }
+
+    /* FLIP Sliding Indicator Pill */
+    .tab-indicator {
+      position: absolute;
+      top: 5px;
+      bottom: 5px;
+      left: 0;
+      width: 0;
+      background: linear-gradient(135deg, rgba(38, 38, 48, 0.95), rgba(28, 28, 36, 0.95));
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: var(--radius-pill);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+      z-index: 1;
+      transition: transform 0.35s var(--transition-spring), width 0.35s var(--transition-spring);
+      pointer-events: none;
+    }
+
+    /* Methodology Panels */
+    .panel-container {
+      position: relative;
+      min-height: 580px;
+    }
+
+    .methodology-panel {
+      display: none;
+      opacity: 0;
+      transform: translateY(14px);
+      transition: opacity 0.35s ease, transform 0.35s var(--transition-spring);
+    }
+
+    .methodology-panel.active {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Card Shells */
+    .glass-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-hairline);
+      border-radius: var(--radius-lg);
+      backdrop-filter: blur(16px);
+      padding: 32px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .glass-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: radial-gradient(800px circle at var(--card-mouse-x, -500px) var(--card-mouse-y, -500px), rgba(255, 255, 255, 0.05), transparent 40%);
+      pointer-events: none;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 24px;
+    }
+
+    .panel-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 32px;
+      font-weight: 400;
+      line-height: 1.1;
+      margin-bottom: 6px;
+    }
+
+    .panel-desc {
+      font-size: 13.5px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      max-width: 680px;
+    }
+
+    .benchmark-pill {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-hairline);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+    }
+
+    /* Layout Grids */
+    .grid-split-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+      align-items: stretch;
+    }
+
+    .grid-split-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    /* 3D Canvas Viewport (Methodology A & E) */
+    .viewport-3d {
+      width: 100%;
+      height: 440px;
+      background: radial-gradient(circle at 50% 50%, #15151c, #070709);
+      border-radius: var(--radius-md);
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--border-hairline);
+    }
+
+    .viewport-overlay-hud {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      right: 16px;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .hud-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      background: rgba(8, 8, 12, 0.75);
+      border: 1px solid var(--border-hairline);
+      padding: 5px 12px;
+      border-radius: var(--radius-pill);
+      backdrop-filter: blur(8px);
+      color: var(--text-secondary);
+    }
+
+    .viewport-controls {
+      position: absolute;
+      bottom: 16px;
+      left: 16px;
+      display: flex;
+      gap: 8px;
+      z-index: 5;
+    }
+
+    .ctrl-btn {
+      background: rgba(22, 22, 28, 0.85);
+      color: var(--text-primary);
+      border: 1px solid var(--border-hairline);
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(8px);
+    }
+
+    .ctrl-btn:hover {
+      background: var(--gold-accent);
+      color: #000;
+      border-color: var(--gold-accent);
+    }
+
+    .ctrl-btn.active {
+      background: var(--gold-accent);
+      color: #000;
+      font-weight: 600;
+    }
+
+    /* Interactive Spring & FLIP Sandbox (Methodology B) */
+    .spring-card-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .morph-card {
+      background: rgba(24, 24, 30, 0.6);
+      border: 1px solid var(--border-hairline);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.3s var(--transition-spring), border-color 0.2s ease;
+    }
+
+    .morph-card:hover {
+      transform: translateY(-4px) scale(1.01);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .morph-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .morph-title {
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    .spring-slider-group {
+      background: rgba(14, 14, 18, 0.8);
+      padding: 20px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-hairline);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .slider-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .slider-label {
+      display: flex;
+      justify-content: space-between;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .slider-input {
+      width: 100%;
+      accent-color: var(--gold-accent);
+    }
+
+    .physics-test-stage {
+      height: 180px;
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: var(--radius-md);
+      border: 1px dashed var(--border-hairline);
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .physics-orb {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--gold-accent), #ff8a2a);
+      box-shadow: 0 0 24px rgba(212, 175, 55, 0.4);
+      cursor: grab;
+      user-select: none;
+      position: absolute;
+      will-change: transform;
+    }
+
+    /* MotionSites Craft Stack (Methodology C) */
+    .craft-demo-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .mesh-preview-box {
+      height: 260px;
+      border-radius: var(--radius-md);
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--border-hairline);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 24px;
+      background-image: radial-gradient(
+        80% 109% at var(--dynamic-mesh-x, 44%) var(--dynamic-mesh-y, 35%),
+        rgb(208, 178, 255) 0%,
+        rgb(255, 238, 216) 42.8%,
+        rgb(232, 64, 13) 88.4%
+      );
+      transition: background-position 0.2s ease;
+    }
+
+    .mesh-noise-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      mix-blend-mode: overlay;
+      opacity: 0.6;
+      background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    }
+
+    .mesh-label-card {
+      position: relative;
+      z-index: 2;
+      background: rgba(14, 14, 18, 0.85);
+      backdrop-filter: blur(12px);
+      padding: 16px 20px;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .shimmer-skeleton-box {
+      height: 260px;
+      border-radius: var(--radius-md);
+      background: rgba(18, 18, 24, 0.7);
+      border: 1px solid var(--border-hairline);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .skeleton-line {
+      height: 16px;
+      border-radius: var(--radius-pill);
+      background: rgba(255, 255, 255, 0.05);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .skeleton-line::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+      animation: shimmer-sweep 2s infinite linear;
+    }
+
+    @keyframes shimmer-sweep {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    /* Luxury Editorial (Methodology D) */
+    .luxury-stage {
+      padding: 40px;
+      background: #09090b;
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      position: relative;
+    }
+
+    .luxury-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.3em;
+      color: var(--gold-accent);
+      margin-bottom: 12px;
+    }
+
+    .luxury-headline {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 48px;
+      font-weight: 300;
+      line-height: 1.05;
+      letter-spacing: -0.01em;
+      margin-bottom: 24px;
+    }
+
+    .luxury-headline em {
+      font-style: italic;
+      color: var(--gold-light);
+    }
+
+    .luxury-spec-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      padding-top: 32px;
+      border-top: 1px solid var(--border-hairline);
+      margin-top: 32px;
+    }
+
+    .spec-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .spec-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 22px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .spec-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+    }
+
+    /* Comparison Matrix Table */
+    .methodology-matrix {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 32px;
+      font-size: 12.5px;
+    }
+
+    .methodology-matrix th {
+      text-align: left;
+      padding: 12px 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-hairline);
+    }
+
+    .methodology-matrix td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border-hairline);
+      color: var(--text-secondary);
+      vertical-align: top;
+    }
+
+    .methodology-matrix tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+      color: var(--text-primary);
+    }
+
+    .matrix-check {
+      color: #00ffaa;
+      font-weight: 700;
+    }
+
+    .matrix-warn {
+      color: #ffaa00;
+    }
+
+    .matrix-cross {
+      color: #ff4466;
+    }
+
+    /* Floating Magnetic Cursor (Luxury Principle 7) */
+    .magnetic-cursor {
+      position: fixed;
+      width: 24px;
+      height: 24px;
+      border: 1px solid rgba(212, 175, 55, 0.6);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
+      transition: width 0.2s ease, height 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+      will-change: transform;
+    }
+
+    .magnetic-cursor-dot {
+      position: fixed;
+      width: 4px;
+      height: 4px;
+      background: var(--gold-light);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 10000;
+      transform: translate(-50%, -50%);
+      will-change: transform;
+    }
+  
+@media (max-width: 860px) {
+  html, body { overflow-x: hidden; width: 100%; }
+  .app-shell { padding: 16px 16px 40px !important; box-sizing: border-box !important; max-width: 100% !important; }
+  header { flex-direction: column !important; align-items: flex-start !important; gap: 16px !important; padding-bottom: 16px !important; margin-bottom: 20px !important; width: 100% !important; box-sizing: border-box !important; }
+  .brand-group { width: 100% !important; }
+  .brand-title { font-size: 20px !important; }
+  .brand-subtitle { font-size: 11px !important; }
+  .telemetry-bar { width: 100% !important; display: flex !important; flex-wrap: wrap !important; gap: 8px !important; padding: 8px 12px !important; font-size: 10px !important; justify-content: space-between !important; box-sizing: border-box !important; }
+  .telemetry-item { gap: 6px !important; }
+  .methodology-tabs { display: flex !important; overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; padding: 4px !important; gap: 4px !important; margin-bottom: 20px !important; border-radius: var(--radius-pill) !important; width: 100% !important; box-sizing: border-box !important; }
+  .tab-btn { flex: 0 0 auto !important; padding: 8px 12px !important; font-size: 11.5px !important; }
+  .grid-split-2, .grid-split-3 { grid-template-columns: 1fr !important; gap: 20px !important; }
+  .viewport-3d { height: 320px !important; }
+  .panel-container { min-height: auto !important; }
+  .glass-card { padding: 18px !important; box-sizing: border-box !important; }
+  .hud-tag { font-size: 9px !important; }
+}
+
+</style>
+</head>
+<body>
+
+  <!-- Ambient Dynamic Mesh Background -->
+  <div class="ambient-mesh" id="ambientMesh"></div>
+
+  <!-- Film Grain Texture Overlay (SVG Noise) -->
+  <svg class="grain-overlay" id="grainOverlay">
+    <filter id="noise">
+      <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch" />
+      <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0" />
+    </filter>
+    <rect width="100%" height="100%" filter="url(#noise)" />
+  </svg>
+
+  <!-- Magnetic Custom Cursor -->
+  <div class="magnetic-cursor" id="cursorRing"></div>
+  <div class="magnetic-cursor-dot" id="cursorDot"></div>
+
+  <div class="app-shell">
+
+    <!-- Top Brand Header & Live Telemetry -->
+    <header>
+      <div class="brand-group">
+        <div class="brand-mark">CH</div>
+        <div>
+          <h1 class="brand-title">Animation & 3D Benchmark Lab</h1>
+          <p class="brand-subtitle">Methodology Evaluation Suite // Mika OS</p>
+        </div>
+      </div>
+
+      <div class="telemetry-bar">
+        <div class="telemetry-item">
+          <div class="status-led"></div>
+          <span>FPS: <strong id="fpsCounter" style="color:#fff;">60.0</strong></span>
+        </div>
+        <div class="telemetry-item">
+          <span>CANVAS DRAWCALLS: <strong id="drawCalls" style="color:var(--gold-light);">18</strong></span>
+        </div>
+        <div class="telemetry-item">
+          <span>TIME: <strong id="gmtClock">11:30:00 GMT</strong></span>
+        </div>
+        <div class="telemetry-item">
+          <button class="ctrl-btn" id="grainToggle" style="padding: 3px 10px; font-size:10px;">GRAIN: ON</button>
+          <button class="ctrl-btn" id="reducedMotionToggle" style="padding: 3px 10px; font-size:10px;">REDUCED: OFF</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Methodology Switcher Tabs (FLIP Layout Indicator) -->
+    <nav class="methodology-tabs" id="tabsNav">
+      <div class="tab-indicator" id="tabIndicator"></div>
+      
+      <button class="tab-btn active" data-target="panel-hybrid">
+        <span>E: Unified Hybrid</span>
+        <span class="tab-badge">RECOMMENDED</span>
+      </button>
+
+      <button class="tab-btn" data-target="panel-threejs">
+        <span>A: Pure 3D Canvas</span>
+        <span class="tab-badge">THREE.JS</span>
+      </button>
+
+      <button class="tab-btn" data-target="panel-waapi">
+        <span>B: WAAPI & Spring</span>
+        <span class="tab-badge">MOTION.DEV</span>
+      </button>
+
+      <button class="tab-btn" data-target="panel-craft">
+        <span>C: Craft Stack</span>
+        <span class="tab-badge">MOTIONSITES</span>
+      </button>
+
+      <button class="tab-btn" data-target="panel-luxury">
+        <span>D: Luxury Editorial</span>
+        <span class="tab-badge">Luxury editorial</span>
+      </button>
+    </nav>
+
+    <!-- Panels Container -->
+    <main class="panel-container">
+
+      <!-- ========================================================================= -->
+      <!-- METHODOLOGY E: UNIFIED GOLD STANDARD (HYBRID ARCHITECTURE)                -->
+      <!-- ========================================================================= -->
+      <section class="methodology-panel active" id="panel-hybrid">
+        <div class="glass-card">
+          <div class="card-header">
+            <div>
+              <div class="luxury-eyebrow">THE ARCHITECTURAL SYNTHESIS</div>
+              <h2 class="panel-title">Unified Hybrid: 3D Centerpiece + WAAPI FLIP + Craft Mesh + Editorial HUD</h2>
+              <p class="panel-desc">
+                Combines all four paradigms: A deterministic 3D WebGL scene acts as the atmospheric kinetic core, layered under hardware-accelerated WAAPI micro-interactions, an SVG grain mesh, and editorial precision telemetry.
+              </p>
+            </div>
+            <div class="benchmark-pill">
+              <span style="color:#00ffaa;">PERFORMANCE: 60 FPS</span>
+              <span style="color:var(--gold-accent);">A11Y: AA COMPLIANT</span>
+            </div>
+          </div>
+
+          <div class="grid-split-2">
+            <!-- 3D Kinetic Canvas Stage -->
+            <div class="viewport-3d" id="stageHybrid">
+              <div class="viewport-overlay-hud">
+                <span class="hud-tag">SUV CONCEPT HUD</span>
+                <span class="hud-tag" id="hybridInclinometer">ROLL: 0° | PITCH: 1°</span>
+              </div>
+              <div class="viewport-controls">
+                <button class="ctrl-btn active" id="btnHybridOrbit">AUTO-ORBIT</button>
+                <button class="ctrl-btn" id="btnHybridWire">WIREFRAME</button>
+                <button class="ctrl-btn" id="btnHybridExplode">EXPLODE PARTS</button>
+              </div>
+            </div>
+
+            <!-- Layered WAAPI & Editorial Controls -->
+            <div class="spring-card-stack">
+              <div class="morph-card" id="cardTelemetry">
+                <div class="morph-header">
+                  <span class="luxury-eyebrow" style="margin:0;">Mika OS TELEMETRY HUD</span>
+                  <span style="font-family:'JetBrains Mono'; font-size:11px; color:#00ffaa;">ONLINE</span>
+                </div>
+                <div class="morph-title">Real-Time Instrument Cluster</div>
+                <p style="font-size:12.5px; color:var(--text-secondary); margin-top:4px;">
+                  Real-time synchronization between Three.js camera matrix and DOM HUD telemetry via decoupled WAAPI state.
+                </p>
+                <div style="display:flex; gap:16px; margin-top:16px;">
+                  <div>
+                    <div style="font-family:'JetBrains Mono'; font-size:18px; color:var(--gold-light);" id="speedTicker">118 KM/H</div>
+                    <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase;">VELOCITY</div>
+                  </div>
+                  <div>
+                    <div style="font-family:'JetBrains Mono'; font-size:18px; color:var(--text-primary);" id="rpmTicker">2,450 RPM</div>
+                    <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase;">TACHOMETER</div>
+                  </div>
+                  <div>
+                    <div style="font-family:'JetBrains Mono'; font-size:18px; color:#00d4ff;">ACTIVE</div>
+                    <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase;">TORQUE VECTOR</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="morph-card" id="cardAesthetics">
+                <div class="morph-header">
+                  <span class="luxury-eyebrow" style="margin:0;">MATERIAL SYSTEM</span>
+                  <span style="font-family:'JetBrains Mono'; font-size:11px; color:var(--gold-accent);">SANDSTORM METALLIC</span>
+                </div>
+                <div class="morph-title">Physical PBR & Film Grain Cohesion</div>
+                <p style="font-size:12.5px; color:var(--text-secondary); margin-top:4px;">
+                  The fixed SVG grain texture overlay applies over both the WebGL canvas and DOM cards simultaneously, grounding 3D geometry into physical magazine reality.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================================= -->
+      <!-- METHODOLOGY A: PURE THREE.JS 3D CANVAS                                    -->
+      <!-- ========================================================================= -->
+      <section class="methodology-panel" id="panel-threejs">
+        <div class="glass-card">
+          <div class="card-header">
+            <div>
+              <div class="luxury-eyebrow">METHODOLOGY A // WEBGL ENGINE</div>
+              <h2 class="panel-title">Pure Three.js Canvas with Deterministic `tick(t)`</h2>
+              <p class="panel-desc">
+                Procedural PBR geometry, moving key/rim point lights, and mathematically solved force layouts. Deterministic frame execution supports automated testing and headless video exports.
+              </p>
+            </div>
+            <div class="benchmark-pill">
+              <span>DRAW CALLS: ~18</span>
+              <span>MEMORY: 14 MB</span>
+            </div>
+          </div>
+
+          <div class="grid-split-2">
+            <div class="viewport-3d" id="stageMethodologyA">
+              <div class="viewport-overlay-hud">
+                <span class="hud-tag">TICK(T) PURE FUNCTION OF TIME</span>
+                <span class="hud-tag" id="pureTimeDisplay">T = 0.00s</span>
+              </div>
+              <div class="viewport-controls">
+                <button class="ctrl-btn" id="btnFreezeA">FREEZE (?introT=2.8)</button>
+                <button class="ctrl-btn" id="btnResetA">PLAY TIMELINE</button>
+              </div>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:16px;">
+              <div class="morph-card">
+                <div class="morph-title">Key Architectural Strengths</div>
+                <ul style="font-size:12.5px; color:var(--text-secondary); margin-top:10px; line-height:1.7; padding-left:18px;">
+                  <li><strong>True 3D Spatial Freedom:</strong> 6-DOF camera orbits, depth-tested occlusions, and real lighting.</li>
+                  <li><strong>Headless Screenshot Testing:</strong> Deterministic timeline enables headless CI/CD pixel diffs.</li>
+                  <li><strong>Video Export Pipeline:</strong> Headless frame capture via `ffmpeg` into 4K 60fps MP4 master reels.</li>
+                </ul>
+              </div>
+
+              <div class="morph-card">
+                <div class="morph-title">Critical Limitations to Manage</div>
+                <ul style="font-size:12.5px; color:var(--text-secondary); margin-top:10px; line-height:1.7; padding-left:18px;">
+                  <li><strong>No Native DOM Reflow:</strong> Cannot use standard HTML text wrapping or responsive flexbox.</li>
+                  <li><strong>Accessibility Gap:</strong> Screen readers cannot parse canvas pixels without parallel ARIA trees.</li>
+                  <li><strong>Mobile Battery/Thermals:</strong> Continuous render loops consume GPU power unless paused when idle.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================================= -->
+      <!-- METHODOLOGY B: WAAPI SPRING PHYSICS & FLIP MORPHING                       -->
+      <!-- ========================================================================= -->
+      <section class="methodology-panel" id="panel-waapi">
+        <div class="glass-card">
+          <div class="card-header">
+            <div>
+              <div class="luxury-eyebrow">METHODOLOGY B // HARDWARE WAAPI</div>
+              <h2 class="panel-title">Motion.dev Spring Physics & FLIP Layout Morphing</h2>
+              <p class="panel-desc">
+                High-performance DOM animations powered strictly by composite-accelerated properties (`transform`, `opacity`). Uses FLIP (First, Last, Invert, Play) for zero-reflow layout transitions.
+              </p>
+            </div>
+            <div class="benchmark-pill">
+              <span style="color:#00ffaa;">CPU OVERHEAD: &lt; 2%</span>
+              <span>WAAPI NATIVE</span>
+            </div>
+          </div>
+
+          <div class="grid-split-2">
+            <!-- Spring Physics Interactive Test Pad -->
+            <div class="spring-slider-group">
+              <div class="morph-title">Interactive Spring Physics Tuner</div>
+              <p style="font-size:12px; color:var(--text-secondary);">
+                Drag the orb or trigger test impulses to test spring velocity and damping in real time.
+              </p>
+
+              <div class="slider-row">
+                <div class="slider-label">
+                  <span>STIFFNESS (TENSION)</span>
+                  <span id="valStiffness">300</span>
+                </div>
+                <input type="range" class="slider-input" id="rangeStiffness" min="50" max="600" value="300">
+              </div>
+
+              <div class="slider-row">
+                <div class="slider-label">
+                  <span>DAMPING (FRICTION)</span>
+                  <span id="valDamping">28</span>
+                </div>
+                <input type="range" class="slider-input" id="rangeDamping" min="5" max="60" value="28">
+              </div>
+
+              <div class="physics-test-stage" id="physicsStage">
+                <div class="physics-orb" id="physicsOrb"></div>
+              </div>
+              <button class="ctrl-btn" id="btnPulseSpring" style="width:100%; text-align:center;">TRIGGER IMPULSE BOUNCE</button>
+            </div>
+
+            <!-- FLIP Card Expansion Simulation -->
+            <div style="display:flex; flex-direction:column; gap:16px;">
+              <div class="morph-title">FLIP Shared Element Morphing</div>
+              <div class="morph-card" id="flipDemoCard">
+                <div class="morph-header">
+                  <span class="luxury-eyebrow" style="margin:0;">EXPANDABLE COMPONENT</span>
+                  <span style="font-family:'JetBrains Mono'; font-size:10px; color:var(--cyan-accent);">CLICK TO EXPAND</span>
+                </div>
+                <div class="morph-title" id="flipCardTitle">FLIP Container State</div>
+                <p id="flipCardBody" style="font-size:12.5px; color:var(--text-secondary); margin-top:8px;">
+                  Notice how expanding this card modifies geometry smoothly without abrupt jumps, utilizing hardware-accelerated transforms rather than layout reflows.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================================= -->
+      <!-- METHODOLOGY C: MOTIONSITES CRAFT STACK                                    -->
+      <!-- ========================================================================= -->
+      <section class="methodology-panel" id="panel-craft">
+        <div class="glass-card">
+          <div class="card-header">
+            <div>
+              <div class="luxury-eyebrow">METHODOLOGY C // CRAFT STACK</div>
+              <h2 class="panel-title">MotionSites Dynamic Mesh & Grain Architecture</h2>
+              <p class="panel-desc">
+                Eliminates digital color banding and flat SaaS gradients by layering animated dynamic CSS variable meshes, AVIF/SVG noise grain overlays, and pill-capsule HUD controls.
+              </p>
+            </div>
+            <div class="benchmark-pill">
+              <span>ZERO DEPENDENCIES</span>
+              <span>PURE CSS TOKENS</span>
+            </div>
+          </div>
+
+          <div class="craft-demo-grid">
+            <!-- Dynamic Mesh Preview -->
+            <div class="mesh-preview-box" id="meshPreviewBox">
+              <div class="mesh-noise-layer" id="meshNoiseLayer"></div>
+              <div class="mesh-label-card">
+                <div class="luxury-eyebrow" style="margin-bottom:4px;">RADIAL GRADIENT MESH</div>
+                <div style="font-weight:600; font-size:14px;">Cursor-Guided Iridescence</div>
+                <p style="font-size:11.5px; color:var(--text-secondary); margin-top:4px;">
+                  Move your mouse over this card to steer the gradient focal point dynamically.
+                </p>
+              </div>
+            </div>
+
+            <!-- Shimmer Hydration Skeleton -->
+            <div class="shimmer-skeleton-box">
+              <div class="luxury-eyebrow" style="margin:0;">HYDRATION SKELETON</div>
+              <div class="skeleton-line" style="width: 60%; height: 24px;"></div>
+              <div class="skeleton-line" style="width: 90%;"></div>
+              <div class="skeleton-line" style="width: 80%;"></div>
+              <div class="skeleton-line" style="width: 45%;"></div>
+              <div style="margin-top:auto;">
+                <div class="skeleton-line" style="width: 100%; height: 44px; border-radius: var(--radius-sm);"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================================= -->
+      <!-- METHODOLOGY D: LUXURY EDITORIAL (Luxury editorial)                              -->
+      <!-- ========================================================================= -->
+      <section class="methodology-panel" id="panel-luxury">
+        <div class="glass-card">
+          <div class="card-header">
+            <div>
+              <div class="luxury-eyebrow">METHODOLOGY D // EDITORIAL LUXURY</div>
+              <h2 class="panel-title">Gemini One-Shot Editorial & Telemetry System</h2>
+              <p class="panel-desc">
+                High-contrast serif typography paired with tracked neutral grotesque, generous whitespace, bespoke instrument telemetry, and complete elimination of SaaS cliches.
+              </p>
+            </div>
+            <div class="benchmark-pill">
+              <span style="color:var(--gold-accent);">HAUTE HORLOGERIE</span>
+              <span>EDITION № 01 / 48</span>
+            </div>
+          </div>
+
+          <div class="luxury-stage">
+            <div class="luxury-eyebrow">CHRONOMETRIC TELEMETRY // GENEVA CALIBER</div>
+            <h3 class="luxury-headline">Precision is not an act.<br>It is <em>an obsession</em>.</h3>
+            <p style="font-size:14px; color:var(--text-secondary); line-height:1.7; max-width:620px;">
+              Engineered with 32-jewel escapement mechanics, oscillating at 28,800 vibrations per hour. Finished with hand-beveled titanium plates and an anti-magnetic silicon hairspring.
+            </p>
+
+            <div class="luxury-spec-row">
+              <div class="spec-item">
+                <div class="spec-val">28,800</div>
+                <div class="spec-sub">VPH OSCILLATION</div>
+              </div>
+              <div class="spec-item">
+                <div class="spec-val">72 HRS</div>
+                <div class="spec-sub">POWER RESERVE</div>
+              </div>
+              <div class="spec-item">
+                <div class="spec-val">300 M</div>
+                <div class="spec-sub">HYDROSTATIC DEPTH</div>
+              </div>
+              <div class="spec-item">
+                <div class="spec-val">GRADE 5</div>
+                <div class="spec-sub">TITANIUM CASE</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Comprehensive Methodology Comparison Matrix -->
+    <section style="margin-top: 48px;">
+      <h3 style="font-family:'Cormorant Garamond', serif; font-size: 26px; margin-bottom: 8px;">Methodology Comparison & Selection Matrix</h3>
+      <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">
+        Empirical evaluation of each paradigm across performance, accessibility, visual fidelity, and engineering maintenance:
+      </p>
+
+      <table class="methodology-matrix">
+        <thead>
+          <tr>
+            <th>Methodology</th>
+            <th>Primary Stack</th>
+            <th>Framerate / GPU</th>
+            <th>Accessibility / SEO</th>
+            <th>Best Suited For</th>
+            <th>Limitations</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>A: Pure 3D WebGL Canvas</strong></td>
+            <td>Three.js, GLSL Shaders, pure `tick(t)`</td>
+            <td><span class="matrix-check">60 FPS (Desktop)</span> / <span class="matrix-warn">Medium GPU</span></td>
+            <td><span class="matrix-cross">Poor (Requires ARIA proxy)</span></td>
+            <td>Showroom centerpieces, CAD explorers, interactive game avatars, 4K video exports</td>
+            <td>High mobile battery draw, no native HTML text reflow.</td>
+          </tr>
+          <tr>
+            <td><strong>B: WAAPI Spring & FLIP</strong></td>
+            <td>Motion.dev, Web Animations API</td>
+            <td><span class="matrix-check">120 FPS Native</span> / <span class="matrix-check">Zero Reflow</span></td>
+            <td><span class="matrix-check">Excellent (Native DOM)</span></td>
+            <td>App navigation, modal expansions, tab indicators, gesture drag physics</td>
+            <td>Cannot render true 3D spatial geometry or complex PBR reflections.</td>
+          </tr>
+          <tr>
+            <td><strong>C: Craft Stack & Mesh</strong></td>
+            <td>Dynamic CSS Mesh, SVG Noise Grain</td>
+            <td><span class="matrix-check">Ultra-Lightweight</span></td>
+            <td><span class="matrix-check">Full Support</span></td>
+            <td>Background atmosphere, tactile paper/lacquer card finishes, eliminating color banding</td>
+            <td>Requires strict z-index stacking discipline.</td>
+          </tr>
+          <tr>
+            <td><strong>D: Luxury Editorial</strong></td>
+            <td>Cormorant Garamond, Monospace Telemetry</td>
+            <td><span class="matrix-check">Zero Overhead</span></td>
+            <td><span class="matrix-check">High Conversion</span></td>
+            <td>High-ticket landing pages, investor decks, executive portals, luxury retail</td>
+            <td>Requires tight typographic restraint and intentional whitespace.</td>
+          </tr>
+          <tr style="background: rgba(212, 175, 55, 0.05); border-left: 3px solid var(--gold-accent);">
+            <td><strong style="color:var(--gold-light);">E: Unified Hybrid (Gold Standard)</strong></td>
+            <td>Three.js Canvas + WAAPI DOM + Grain Mesh + Editorial HUD</td>
+            <td><span class="matrix-check">60-120 FPS</span> / <span class="matrix-check">Adaptive Loop</span></td>
+            <td><span class="matrix-check">Full AA Compliance</span></td>
+            <td>Flagship platforms (Mika OS dashboards and data-heavy apps)</td>
+            <td>Requires clean component decoupling between 3D state and DOM state.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+  </div>
+
+  <script>
+    /* ========================================================================= */
+    /* 1. TELEMETRY, TIME, & FPS MONITOR                                         */
+    /* ========================================================================= */
+    let frameCount = 0;
+    let lastTime = performance.now();
+    let fps = 60;
+    const fpsCounter = document.getElementById('fpsCounter');
+    const gmtClock = document.getElementById('gmtClock');
+
+    function updateTelemetry() {
+      const now = performance.now();
+      frameCount++;
+      if (now - lastTime >= 1000) {
+        fps = (frameCount * 1000) / (now - lastTime);
+        fpsCounter.textContent = fps.toFixed(1);
+        frameCount = 0;
+        lastTime = now;
+      }
+
+      // Update GMT Clock
+      const date = new Date();
+      gmtClock.textContent = date.toUTCString().split(' ')[4] + ' GMT';
+
+      requestAnimationFrame(updateTelemetry);
+    }
+    requestAnimationFrame(updateTelemetry);
+
+    /* ========================================================================= */
+    /* 2. TAB SWITCHER & FLIP INDICATOR PILL                                     */
+    /* ========================================================================= */
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabIndicator = document.getElementById('tabIndicator');
+    const panels = document.querySelectorAll('.methodology-panel');
+
+    function positionIndicator(targetBtn) {
+      if (!targetBtn) return;
+      const btnRect = targetBtn.getBoundingClientRect();
+      const parentRect = targetBtn.parentElement.getBoundingClientRect();
+      
+      tabIndicator.style.transform = `translateX(${btnRect.left - parentRect.left}px)`;
+      tabIndicator.style.width = `${btnRect.width}px`;
+    }
+
+    tabButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        tabButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        positionIndicator(btn);
+
+        const targetId = btn.getAttribute('data-target');
+        panels.forEach(p => {
+          if (p.id === targetId) {
+            p.classList.add('active');
+          } else {
+            p.classList.remove('active');
+          }
+        });
+      });
+    });
+
+    // Initial position on load
+    window.addEventListener('DOMContentLoaded', () => {
+      positionIndicator(document.querySelector('.tab-btn.active'));
+    });
+    window.addEventListener('resize', () => {
+      positionIndicator(document.querySelector('.tab-btn.active'));
+    });
+
+    /* ========================================================================= */
+    /* 3. MAGNETIC CUSTOM CURSOR & RADIAL CARD GLOW                              */
+    /* ========================================================================= */
+    const cursorRing = document.getElementById('cursorRing');
+    const cursorDot = document.getElementById('cursorDot');
+    let mouseX = -100, mouseY = -100;
+    let ringX = -100, ringY = -100;
+
+    window.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+
+      cursorDot.style.transform = `translate(${mouseX}px, ${mouseY}px)`;
+
+      // Update dynamic mesh background coords
+      const pctX = (mouseX / window.innerWidth) * 100;
+      const pctY = (mouseY / window.innerHeight) * 100;
+      document.getElementById('ambientMesh').style.setProperty('--mesh-x', `${pctX}%`);
+      document.getElementById('ambientMesh').style.setProperty('--mesh-y', `${pctY}%`);
+
+      // Card hover radial glow coordinates
+      document.querySelectorAll('.glass-card').forEach(card => {
+        const rect = card.getBoundingClientRect();
+        card.style.setProperty('--card-mouse-x', `${mouseX - rect.left}px`);
+        card.style.setProperty('--card-mouse-y', `${mouseY - rect.top}px`);
+      });
+
+      // MotionSites dynamic card mesh
+      const meshBox = document.getElementById('meshPreviewBox');
+      if (meshBox) {
+        const mRect = meshBox.getBoundingClientRect();
+        meshBox.style.setProperty('--dynamic-mesh-x', `${((mouseX - mRect.left) / mRect.width) * 100}%`);
+        meshBox.style.setProperty('--dynamic-mesh-y', `${((mouseY - mRect.top) / mRect.height) * 100}%`);
+      }
+    });
+
+    function animateCursor() {
+      ringX += (mouseX - ringX) * 0.18;
+      ringY += (mouseY - ringY) * 0.18;
+      cursorRing.style.transform = `translate(${ringX}px, ${ringY}px)`;
+      requestAnimationFrame(animateCursor);
+    }
+    requestAnimationFrame(animateCursor);
+
+    /* ========================================================================= */
+    /* 4. TOGGLES: GRAIN & REDUCED MOTION                                        */
+    /* ========================================================================= */
+    const grainToggle = document.getElementById('grainToggle');
+    const grainOverlay = document.getElementById('grainOverlay');
+    let grainOn = true;
+
+    grainToggle.addEventListener('click', () => {
+      grainOn = !grainOn;
+      grainOverlay.style.opacity = grainOn ? '0.04' : '0';
+      grainToggle.textContent = `GRAIN: ${grainOn ? 'ON' : 'OFF'}`;
+      grainToggle.classList.toggle('active', grainOn);
+    });
+
+    const reducedMotionToggle = document.getElementById('reducedMotionToggle');
+    let reducedMotionOn = false;
+
+    reducedMotionToggle.addEventListener('click', () => {
+      reducedMotionOn = !reducedMotionOn;
+      reducedMotionToggle.textContent = `REDUCED: ${reducedMotionOn ? 'ON' : 'OFF'}`;
+      reducedMotionToggle.classList.toggle('active', reducedMotionOn);
+    });
+
+    /* ========================================================================= */
+    /* 5. THREE.JS 3D STAGE IMPLEMENTATION (HYBRID & METHODOLOGY A)              */
+    /* ========================================================================= */
+    function create3DScene(containerId) {
+      const container = document.getElementById(containerId);
+      if (!container || !window.THREE) return null;
+
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+      camera.position.set(4, 2.5, 5);
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(container.clientWidth, container.clientHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.shadowMap.enabled = true;
+      container.appendChild(renderer.domElement);
+
+      // Lighting
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+      scene.add(ambientLight);
+
+      const keyLight = new THREE.DirectionalLight(0xd4af37, 1.2);
+      keyLight.position.set(5, 8, 4);
+      scene.add(keyLight);
+
+      const rimLight = new THREE.PointLight(0x00d4ff, 1.8, 15);
+      rimLight.position.set(-4, 3, -3);
+      scene.add(rimLight);
+
+      // Central Kinetic Geometry (Stylised SUV core assembly)
+      const group = new THREE.Group();
+      scene.add(group);
+
+      // Chassis block
+      const bodyMat = new THREE.MeshStandardMaterial({
+        color: 0xc1aa88, // Sandstorm metallic
+        metalness: 0.65,
+        roughness: 0.28,
+      });
+
+      const bodyGeo = new THREE.BoxGeometry(2.4, 0.8, 1.3);
+      const bodyMesh = new THREE.Mesh(bodyGeo, bodyMat);
+      bodyMesh.position.y = 0.5;
+      group.add(bodyMesh);
+
+      // Roof (Ice White)
+      const roofMat = new THREE.MeshStandardMaterial({
+        color: 0xf4f6f9,
+        roughness: 0.2,
+        metalness: 0.1
+      });
+      const roofGeo = new THREE.BoxGeometry(1.6, 0.45, 1.25);
+      const roofMesh = new THREE.Mesh(roofGeo, roofMat);
+      roofMesh.position.set(-0.1, 1.05, 0);
+      group.add(roofMesh);
+
+      // Gold Core Sphere (Power train)
+      const coreMat = new THREE.MeshStandardMaterial({
+        color: 0xd4af37,
+        emissive: 0x4a370e,
+        metalness: 0.9,
+        roughness: 0.1
+      });
+      const coreGeo = new THREE.SphereGeometry(0.35, 32, 32);
+      const coreMesh = new THREE.Mesh(coreGeo, coreMat);
+      coreMesh.position.y = 0.5;
+      group.add(coreMesh);
+
+      // Outer Orbital Rings
+      const ringMat = new THREE.MeshBasicMaterial({ color: 0x00d4ff, wireframe: true });
+      const ringGeo = new THREE.TorusGeometry(1.6, 0.02, 16, 64);
+      const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+      ringMesh.rotation.x = Math.PI / 2;
+      group.add(ringMesh);
+
+      // Ground shadow ring
+      const groundMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.4 });
+      const groundGeo = new THREE.CircleGeometry(2.2, 32);
+      const groundMesh = new THREE.Mesh(groundGeo, groundMat);
+      groundMesh.rotation.x = -Math.PI / 2;
+      groundMesh.position.y = -0.01;
+      scene.add(groundMesh);
+
+      camera.lookAt(0, 0.5, 0);
+
+      let autoOrbit = true;
+      let explode = false;
+      let explodedOffset = 0;
+
+      function resize() {
+        if (!container.clientWidth || !container.clientHeight) return;
+        camera.aspect = container.clientWidth / container.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(container.clientWidth, container.clientHeight);
+      }
+      window.addEventListener('resize', resize);
+
+      return {
+        scene,
+        camera,
+        renderer,
+        group,
+        bodyMesh,
+        roofMesh,
+        coreMesh,
+        ringMesh,
+        tick: (t) => {
+          if (reducedMotionOn) {
+            camera.lookAt(0, 0.5, 0);
+            renderer.render(scene, camera);
+            return;
+          }
+
+          if (autoOrbit) {
+            group.rotation.y = t * 0.4;
+            ringMesh.rotation.z = t * 0.6;
+          }
+
+          // Gentle bob
+          group.position.y = Math.sin(t * 1.5) * 0.08;
+
+          // Explode lerp
+          const targetExp = explode ? 0.6 : 0;
+          explodedOffset += (targetExp - explodedOffset) * 0.1;
+          roofMesh.position.y = 1.05 + explodedOffset * 1.2;
+          bodyMesh.scale.set(1 + explodedOffset * 0.1, 1, 1 + explodedOffset * 0.1);
+
+          renderer.render(scene, camera);
+        },
+        toggleOrbit: () => { autoOrbit = !autoOrbit; return autoOrbit; },
+        toggleWire: () => {
+          bodyMat.wireframe = !bodyMat.wireframe;
+          roofMat.wireframe = !roofMat.wireframe;
+          return bodyMat.wireframe;
+        },
+        toggleExplode: () => {
+          explode = !explode;
+          return explode;
+        }
+      };
+    }
+
+    const hybrid3D = create3DScene('stageHybrid');
+    const methodA3D = create3DScene('stageMethodologyA');
+
+    // Controls for Hybrid 3D
+    const btnHybridOrbit = document.getElementById('btnHybridOrbit');
+    const btnHybridWire = document.getElementById('btnHybridWire');
+    const btnHybridExplode = document.getElementById('btnHybridExplode');
+
+    if (btnHybridOrbit && hybrid3D) {
+      btnHybridOrbit.addEventListener('click', () => {
+        const on = hybrid3D.toggleOrbit();
+        btnHybridOrbit.classList.toggle('active', on);
+      });
+    }
+
+    if (btnHybridWire && hybrid3D) {
+      btnHybridWire.addEventListener('click', () => {
+        const on = hybrid3D.toggleWire();
+        btnHybridWire.classList.toggle('active', on);
+      });
+    }
+
+    if (btnHybridExplode && hybrid3D) {
+      btnHybridExplode.addEventListener('click', () => {
+        const on = hybrid3D.toggleExplode();
+        btnHybridExplode.classList.toggle('active', on);
+      });
+    }
+
+    /* ========================================================================= */
+    /* 6. SPRING PHYSICS SANDBOX (METHODOLOGY B)                                  */
+    /* ========================================================================= */
+    const physicsOrb = document.getElementById('physicsOrb');
+    const physicsStage = document.getElementById('physicsStage');
+    const rangeStiffness = document.getElementById('rangeStiffness');
+    const rangeDamping = document.getElementById('rangeDamping');
+    const valStiffness = document.getElementById('valStiffness');
+    const valDamping = document.getElementById('valDamping');
+    const btnPulseSpring = document.getElementById('btnPulseSpring');
+
+    let springK = 300;
+    let springDamp = 28;
+    let orbX = 0, orbV = 0, orbTarget = 0;
+
+    rangeStiffness.addEventListener('input', (e) => {
+      springK = parseFloat(e.target.value);
+      valStiffness.textContent = springK;
+    });
+
+    rangeDamping.addEventListener('input', (e) => {
+      springDamp = parseFloat(e.target.value);
+      valDamping.textContent = springDamp;
+    });
+
+    btnPulseSpring.addEventListener('click', () => {
+      orbV = 650; // strong impulse
+    });
+
+    // Simple spring integrator
+    let lastSpringTime = performance.now();
+    function tickSpring() {
+      const now = performance.now();
+      const dt = Math.min((now - lastSpringTime) / 1000, 0.05);
+      lastSpringTime = now;
+
+      if (!reducedMotionOn) {
+        const force = -springK * (orbX - orbTarget) - springDamp * orbV;
+        orbV += force * dt;
+        orbX += orbV * dt;
+      } else {
+        orbX = orbTarget;
+        orbV = 0;
+      }
+
+      physicsOrb.style.transform = `translateX(${orbX}px)`;
+      requestAnimationFrame(tickSpring);
+    }
+    requestAnimationFrame(tickSpring);
+
+    /* ========================================================================= */
+    /* 7. FLIP EXPANDABLE CARD DEMO                                              */
+    /* ========================================================================= */
+    const flipCard = document.getElementById('flipDemoCard');
+    let isExpanded = false;
+
+    flipCard.addEventListener('click', () => {
+      // First: capture initial rect
+      const first = flipCard.getBoundingClientRect();
+
+      // State change
+      isExpanded = !isExpanded;
+      if (isExpanded) {
+        flipCard.style.padding = '36px';
+        flipCard.style.background = 'rgba(36, 36, 46, 0.9)';
+        flipCard.style.borderColor = 'var(--gold-accent)';
+      } else {
+        flipCard.style.padding = '20px';
+        flipCard.style.background = 'rgba(24, 24, 30, 0.6)';
+        flipCard.style.borderColor = 'var(--border-hairline)';
+      }
+
+      // Last: capture final rect
+      const last = flipCard.getBoundingClientRect();
+
+      // Invert
+      const invertY = first.height - last.height;
+
+      // Play via WAAPI
+      flipCard.animate([
+        { transform: `scaleY(${first.height / last.height})` },
+        { transform: 'scaleY(1)' }
+      ], {
+        duration: 350,
+        easing: 'cubic-bezier(0.16, 1, 0.3, 1)'
+      });
+    });
+
+    /* ========================================================================= */
+    /* 8. MASTER ANIMATION LOOP (DETERMINISTIC CLOCK)                             */
+    /* ========================================================================= */
+    let startTime = performance.now();
+    let frozenTime = null;
+
+    const btnFreezeA = document.getElementById('btnFreezeA');
+    const btnResetA = document.getElementById('btnResetA');
+    const pureTimeDisplay = document.getElementById('pureTimeDisplay');
+    const hybridInclinometer = document.getElementById('hybridInclinometer');
+
+    if (btnFreezeA) {
+      btnFreezeA.addEventListener('click', () => {
+        frozenTime = 2.8; // freeze at 2.8s
+        btnFreezeA.classList.add('active');
+        btnResetA.classList.remove('active');
+      });
+    }
+
+    if (btnResetA) {
+      btnResetA.addEventListener('click', () => {
+        frozenTime = null;
+        startTime = performance.now();
+        btnFreezeA.classList.remove('active');
+        btnResetA.classList.add('active');
+      });
+    }
+
+    function masterTick(now) {
+      const elapsed = frozenTime !== null ? frozenTime : (now - startTime) / 1000;
+
+      if (pureTimeDisplay) {
+        pureTimeDisplay.textContent = `T = ${elapsed.toFixed(2)}s`;
+      }
+
+      // Update hybrid inclinometer
+      if (hybridInclinometer) {
+        const roll = Math.round(Math.sin(elapsed * 1.5) * 4);
+        const pitch = Math.round(Math.cos(elapsed * 0.9) * 2);
+        hybridInclinometer.textContent = `ROLL: ${roll}° | PITCH: ${pitch}°`;
+      }
+
+      if (hybrid3D) hybrid3D.tick(elapsed);
+      if (methodA3D) methodA3D.tick(elapsed);
+
+      requestAnimationFrame(masterTick);
+    }
+    requestAnimationFrame(masterTick);
+
+  </script>
+</body>
+</html>

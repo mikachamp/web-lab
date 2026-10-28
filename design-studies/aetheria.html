@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AETHERIA — Spatial & Architectural Atelier // Zurich</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  
+  <!-- Three.js r128 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <style>
+    :root {
+      --bg-base: #f7f5f0;
+      --bg-surface: #ffffff;
+      --bg-elevated: #eeece5;
+      --travertine: #e6e2d6;
+      --limestone: #d9d4c5;
+      --slate-charcoal: #1f2023;
+      --slate-muted: #4a4d52;
+      --ochre-accent: #8c7a5b;
+      --border-hairline: rgba(31, 32, 35, 0.1);
+      --border-accent: rgba(140, 122, 91, 0.4);
+      --text-primary: #18191b;
+      --text-secondary: rgba(24, 25, 27, 0.7);
+      --text-muted: rgba(24, 25, 27, 0.45);
+      --radius-sm: 4px;
+      --radius-md: 10px;
+      --radius-lg: 20px;
+      --radius-pill: 9999px;
+      --transition-spring: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-primary);
+      font-family: 'Inter', -apple-system, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Ambient Warm Architectural Gradient */
+    .ambient-atmosphere {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background: radial-gradient(circle at 70% 20%, rgba(230, 226, 214, 0.8) 0%, transparent 60%),
+                  radial-gradient(circle at 20% 80%, rgba(217, 212, 197, 0.5) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    /* SVG Grain Overlay */
+    .grain-overlay {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.035;
+      mix-blend-mode: multiply;
+    }
+
+    /* Magnetic Custom Cursor */
+    .cursor-ring {
+      position: fixed;
+      width: 32px;
+      height: 32px;
+      border: 1px solid rgba(31, 32, 35, 0.35);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 10000;
+      transform: translate(-50%, -50%);
+      will-change: transform;
+      transition: width 0.2s ease, height 0.2s ease, border-color 0.2s ease;
+    }
+
+    .cursor-dot {
+      position: fixed;
+      width: 4px;
+      height: 4px;
+      background: var(--slate-charcoal);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 10001;
+      transform: translate(-50%, -50%);
+      will-change: transform;
+    }
+
+    /* Floating Capsule Header */
+    header {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 64px);
+      max-width: 1320px;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 28px;
+      background: rgba(247, 245, 240, 0.82);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border-hairline);
+      border-radius: var(--radius-pill);
+      box-shadow: 0 4px 24px rgba(31, 32, 35, 0.06);
+    }
+
+    .brand-mark-group {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .brand-monogram {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1px solid var(--slate-charcoal);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--slate-charcoal);
+    }
+
+    .brand-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 21px;
+      letter-spacing: 0.2em;
+      font-weight: 400;
+      text-transform: uppercase;
+      color: var(--slate-charcoal);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      list-style: none;
+    }
+
+    .nav-link {
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: color 0.25s ease;
+      position: relative;
+      padding: 4px 0;
+    }
+
+    .nav-link:hover {
+      color: var(--slate-charcoal);
+    }
+
+    /* Switcher Dropdown */
+    .atelier-switcher {
+      position: relative;
+    }
+
+    .atelier-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(31, 32, 35, 0.05);
+      border: 1px solid var(--border-hairline);
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      color: var(--slate-charcoal);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    .atelier-btn:hover {
+      background: rgba(31, 32, 35, 0.1);
+    }
+
+    .atelier-menu {
+      position: absolute;
+      top: calc(100% + 12px);
+      right: 0;
+      width: 240px;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(24px);
+      border: 1px solid var(--border-hairline);
+      border-radius: var(--radius-md);
+      padding: 8px;
+      display: none;
+      flex-direction: column;
+      gap: 4px;
+      box-shadow: 0 16px 40px rgba(31, 32, 35, 0.12);
+      z-index: 200;
+    }
+
+    .atelier-menu.active {
+      display: flex;
+    }
+
+    .atelier-item {
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      transition: all 0.2s ease;
+    }
+
+    .atelier-item:hover {
+      background: rgba(31, 32, 35, 0.05);
+      color: var(--slate-charcoal);
+    }
+
+    .atelier-item.current {
+      background: rgba(140, 122, 91, 0.12);
+      border-left: 2px solid var(--ochre-accent);
+      color: var(--slate-charcoal);
+    }
+
+    /* Hero Section */
+    .hero-section {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 140px 48px 60px;
+      max-width: 1440px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 10;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 60px;
+      align-items: center;
+      width: 100%;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      background: rgba(31, 32, 35, 0.04);
+      border: 1px solid var(--border-hairline);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--ochre-accent);
+      margin-bottom: 24px;
+    }
+
+    .hero-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(48px, 6vw, 76px);
+      font-weight: 300;
+      line-height: 1.02;
+      letter-spacing: -0.01em;
+      color: var(--slate-charcoal);
+      margin-bottom: 24px;
+    }
+
+    .hero-title em {
+      font-style: italic;
+      color: var(--ochre-accent);
+      font-weight: 400;
+    }
+
+    .hero-desc {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.8;
+      max-width: 520px;
+      font-weight: 300;
+      margin-bottom: 32px;
+    }
+
+    .btn-charcoal {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--slate-charcoal);
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      font-size: 12.5px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 14px 32px;
+      border-radius: var(--radius-pill);
+      text-decoration: none;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(31, 32, 35, 0.15);
+      transition: all 0.3s var(--transition-spring);
+    }
+
+    .btn-charcoal:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(31, 32, 35, 0.25);
+      background: #000;
+    }
+
+    /* 3D Architectural Pavilion Canvas */
+    .pavilion-stage-container {
+      position: relative;
+      width: 100%;
+      height: 560px;
+      background: linear-gradient(180deg, #eae6dc, #dfdbce);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-hairline);
+      overflow: hidden;
+      box-shadow: 0 12px 36px rgba(31, 32, 35, 0.08);
+    }
+
+    .stage-hud-overlay {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      right: 20px;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .hud-chip {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      background: rgba(247, 245, 240, 0.85);
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-hairline);
+      backdrop-filter: blur(8px);
+      color: var(--slate-charcoal);
+    }
+
+    .solar-slider-bar {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      right: 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: rgba(247, 245, 240, 0.9);
+      padding: 10px 20px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-hairline);
+      backdrop-filter: blur(12px);
+      z-index: 10;
+    }
+
+    .solar-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--slate-charcoal);
+      white-space: nowrap;
+    }
+
+    .solar-slider {
+      flex: 1;
+      accent-color: var(--slate-charcoal);
+      cursor: pointer;
+    }
+
+    /* Spatial Telemetry Strip */
+    .telemetry-strip {
+      border-top: 1px solid var(--border-hairline);
+      border-bottom: 1px solid var(--border-hairline);
+      background: var(--bg-surface);
+      padding: 36px 48px;
+      margin: 40px auto 100px;
+      max-width: 1440px;
+    }
+
+    .telemetry-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 32px;
+    }
+
+    .telemetry-metric {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      border-left: 1px solid var(--border-hairline);
+      padding-left: 24px;
+    }
+
+    .metric-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: clamp(24px, 2.5vw, 32px);
+      font-weight: 400;
+      color: var(--slate-charcoal);
+    }
+
+    .metric-label {
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--ochre-accent);
+    }
+
+    .metric-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* Asymmetric Editorial Portfolio Grid */
+    .portfolio-section {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 0 48px 120px;
+    }
+
+    .section-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.3em;
+      color: var(--ochre-accent);
+      margin-bottom: 12px;
+    }
+
+    .section-headline {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(36px, 4vw, 56px);
+      font-weight: 300;
+      line-height: 1.05;
+      letter-spacing: -0.01em;
+      margin-bottom: 60px;
+      max-width: 720px;
+      color: var(--slate-charcoal);
+    }
+
+    .project-grid {
+      display: grid;
+      grid-template-columns: 1.3fr 0.7fr;
+      gap: 40px;
+      align-items: stretch;
+      margin-bottom: 40px;
+    }
+
+    .project-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-hairline);
+      border-radius: var(--radius-lg);
+      padding: 44px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 8px 30px rgba(31, 32, 35, 0.04);
+      transition: all 0.35s var(--transition-spring);
+    }
+
+    .project-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 16px 44px rgba(31, 32, 35, 0.08);
+      border-color: rgba(140, 122, 91, 0.3);
+    }
+
+    .project-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 34px;
+      font-weight: 400;
+      margin-bottom: 12px;
+      color: var(--slate-charcoal);
+    }
+
+    .project-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: 32px;
+    }
+
+    /* Minimalist Footer */
+    footer {
+      border-top: 1px solid var(--border-hairline);
+      background: #eeebe3;
+      padding: 80px 48px 40px;
+      max-width: 1440px;
+      margin: 0 auto;
+    }
+
+    .footer-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 32px;
+      border-top: 1px solid var(--border-hairline);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+  
+@media (max-width: 860px) {
+  html, body { overflow-x: hidden !important; width: 100% !important; max-width: 100% !important; }
+  header { padding: 14px 20px !important; box-sizing: border-box !important; width: 100% !important; }
+  .nav-links { display: none !important; }
+  .hero-section { padding: 90px 20px 40px !important; min-height: auto !important; box-sizing: border-box !important; width: 100% !important; }
+  .hero-grid { grid-template-columns: 1fr !important; gap: 32px !important; width: 100% !important; }
+  .hero-title { font-size: clamp(34px, 8vw, 48px) !important; }
+  .pavilion-stage-container, .timepiece-stage, .olfactory-stage, .stage-container, .sonder-stage { height: 340px !important; width: 100% !important; max-width: 100% !important; box-sizing: border-box !important; }
+  .stage-hud-overlay { top: 10px !important; left: 10px !important; right: 10px !important; }
+  .hud-chip { font-size: 9px !important; padding: 4px 8px !important; }
+  .solar-slider-bar { bottom: 10px !important; left: 10px !important; right: 10px !important; padding: 6px 12px !important; box-sizing: border-box !important; }
+  .solar-label { font-size: 9.5px !important; }
+  .telemetry-grid { grid-template-columns: 1fr 1fr !important; gap: 16px !important; width: 100% !important; }
+  .project-grid, .timepiece-grid, .craft-grid, .footer-grid { grid-template-columns: 1fr !important; gap: 24px !important; width: 100% !important; }
+  section, .container, .monograph-section, .collection-section, .craft-section, .pyramid-section, .studio-section { padding-inline: 20px !important; max-width: 100% !important; box-sizing: border-box !important; }
+  footer { padding: 36px 20px !important; box-sizing: border-box !important; width: 100% !important; }
+}
+
+</style>
+</head>
+<body>
+
+  <div class="ambient-atmosphere"></div>
+
+  <!-- Grain Overlay -->
+  <svg class="grain-overlay">
+    <filter id="noise">
+      <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch" />
+    </filter>
+    <rect width="100%" height="100%" filter="url(#noise)" />
+  </svg>
+
+  <div class="cursor-ring" id="cursorRing"></div>
+  <div class="cursor-dot" id="cursorDot"></div>
+
+  <!-- Header -->
+  <header>
+    <a href="#" class="brand-mark-group">
+      <div class="brand-monogram">AE</div>
+      <div class="brand-name">AETHERIA</div>
+    </a>
+
+    <ul class="nav-links">
+      <li><a href="#projects" class="nav-link">Monographs</a></li>
+      <li><a href="#spatial" class="nav-link">Solar Physics</a></li>
+      <li><a href="#acoustics" class="nav-link">Acoustics</a></li>
+      <li><a href="#studio" class="nav-link">Studio</a></li>
+    </ul>
+
+    <div class="atelier-switcher">
+      <button class="atelier-btn" id="atelierBtn">
+        <span>COLLECTIONS</span>
+        <svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.2"/></svg>
+      </button>
+
+      <div class="atelier-menu" id="atelierMenu">
+        <a href="nocturnal.html" class="atelier-item">
+          <span>Noc-Turnal</span>
+          <span>Haute Horlogerie Atelier</span>
+        </a>
+        <a href="aetheria.html" class="atelier-item current">
+          <span>Aetheria</span>
+          <span>Spatial & Architecture</span>
+        </a>
+        <a href="vespera.html" class="atelier-item">
+          <span>Vespera</span>
+          <span>Haute Parfumerie</span>
+        </a>
+        <a href="../animation-methodologies-lab/index.html" class="atelier-item">
+          <span>Benchmark Suite</span>
+          <span>Mika OS Methodologies</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-grid">
+      <div>
+        <div class="hero-badge">ZURICH // ROTKREUZ ATELIER</div>
+        <h1 class="hero-title">
+          Spaces carved<br>from <em>profound silence</em>.
+        </h1>
+        <p class="hero-desc">
+          Monolithic limestone volumes, cantilevered travertine planes, and light calibrated to the astronomical solar azimuth. We engineer stillness in an overstimulated world.
+        </p>
+        <a href="#projects" class="btn-charcoal">View Monographs</a>
+      </div>
+
+      <!-- 3D Pavilion with Solar Shadow Simulator -->
+      <div class="pavilion-stage-container" id="pavilionStage">
+        <div class="stage-hud-overlay">
+          <span class="hud-chip">CANTILEVER PAVILION MODEL</span>
+          <span class="hud-chip" id="hudSolarAngle">AZIMUTH: 142° | ALTITUDE: 38°</span>
+        </div>
+
+        <div class="solar-slider-bar">
+          <span class="solar-label">SOLAR ANGLE:</span>
+          <input type="range" class="solar-slider" id="solarSlider" min="0" max="360" value="142">
+          <span class="solar-label" id="solarTimeLabel">14:20 CET</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Spatial Telemetry Strip -->
+  <section class="telemetry-strip" id="spatial">
+    <div class="telemetry-grid">
+      <div class="telemetry-metric">
+        <div class="metric-value">0.42 S</div>
+        <div class="metric-label">REVERBERATION RT60</div>
+        <div class="metric-sub">Absorptive hemlock acoustic micro-slats tuned for vocal clarity.</div>
+      </div>
+
+      <div class="telemetry-metric">
+        <div class="metric-value">4.8 %</div>
+        <div class="metric-label">DAYLIGHT FACTOR</div>
+        <div class="metric-sub">Passive north-facing clerestory light wells eliminating artificial glare.</div>
+      </div>
+
+      <div class="telemetry-metric">
+        <div class="metric-value">340 KJ</div>
+        <div class="metric-label">THERMAL MASS (M²K)</div>
+        <div class="metric-sub">Rammed limestone floor plates regulating seasonal temperature flux.</div>
+      </div>
+
+      <div class="telemetry-metric">
+        <div class="metric-value">1:1.618</div>
+        <div class="metric-label">GOLDEN SECTION</div>
+        <div class="metric-sub">Euclidean spatial proportions anchoring all cantilevered spans.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Portfolio Monographs -->
+  <section class="portfolio-section" id="projects">
+    <div class="section-eyebrow">SELECTED MONOGRAPHS</div>
+    <h2 class="section-headline">Architectural presence across alpine terrain.</h2>
+
+    <div class="project-grid">
+      <div class="project-card">
+        <span style="font-family:'JetBrains Mono'; font-size:11px; color:var(--ochre-accent); margin-bottom:12px;">ENGADIN VALLEY // 2026</span>
+        <h3 class="project-title">The Valser Monolith</h3>
+        <p class="project-desc">
+          Embedded directly into the gneiss bedrock of the Swiss Alps, featuring continuous 14-meter frameless glass apertures and thermal granite heat sinks.
+        </p>
+        <div style="display:flex; gap:24px; border-top:1px solid var(--border-hairline); padding-top:20px; font-family:'JetBrains Mono'; font-size:12px;">
+          <span>840 M² LIVING</span>
+          <span>VALS GNEISS BEDROCK</span>
+          <span>NET-ZERO ENERGY</span>
+        </div>
+      </div>
+
+      <div class="project-card">
+        <span style="font-family:'JetBrains Mono'; font-size:11px; color:var(--ochre-accent); margin-bottom:12px;">LAKE LUCERNE // 2025</span>
+        <h3 class="project-title">The Travertine Pavilion</h3>
+        <p class="project-desc">
+          Cantilevered over the shoreline waters, composed of Roman travertine slabs balanced on an asymmetric basalt fulcrum.
+        </p>
+        <div style="display:flex; gap:24px; border-top:1px solid var(--border-hairline); padding-top:20px; font-family:'JetBrains Mono'; font-size:12px;">
+          <span>520 M² PAVILION</span>
+          <span>ROMAN TRAVERTINE</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer id="studio">
+    <div class="footer-bottom">
+      <span>© 2026 AETHERIA ATELIER AG. ZURICH // 47°22'N 8°32'E</span>
+      <span>STUDIO MONOGRAPH № 04</span>
+    </div>
+  </footer>
+
+  <!-- Three.js Minimalist Pavilion Scene -->
+  <script>
+    const stage = document.getElementById('pavilionStage');
+    const hudSolarAngle = document.getElementById('hudSolarAngle');
+    const solarSlider = document.getElementById('solarSlider');
+    const solarTimeLabel = document.getElementById('solarTimeLabel');
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(40, stage.clientWidth / stage.clientHeight, 0.1, 100);
+    camera.position.set(6, 4, 8);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+    renderer.setSize(stage.clientWidth, stage.clientHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.28;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    stage.appendChild(renderer.domElement);
+
+    // =========================================================================
+    // DYNAMIC SWISS ALPINE SKY & SUN HDRI ENVIRONMENT (PMREM GENERATOR)
+    // =========================================================================
+    function createAlpineStudioEnvironment(glRenderer) {
+      const pmrem = new THREE.PMREMGenerator(glRenderer);
+      pmrem.compileEquirectangularShader();
+
+      const c = document.createElement('canvas');
+      c.width = 1024;
+      c.height = 512;
+      const ctx = c.getContext('2d');
+
+      // Clear Alpine Atmosphere Sky Gradient
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, 512);
+      skyGrad.addColorStop(0, '#1a2634');
+      skyGrad.addColorStop(0.35, '#2e3d4c');
+      skyGrad.addColorStop(0.65, '#e8d5be');
+      skyGrad.addColorStop(0.85, '#d6c2a8');
+      skyGrad.addColorStop(1, '#1e1c18');
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, 1024, 512);
+
+      // Direct Alpine Sun Disk (Top-Left 45°)
+      const sunDisk = ctx.createRadialGradient(280, 120, 10, 280, 120, 140);
+      sunDisk.addColorStop(0, 'rgba(255, 255, 240, 1.0)');
+      sunDisk.addColorStop(0.2, 'rgba(255, 240, 210, 0.9)');
+      sunDisk.addColorStop(0.6, 'rgba(235, 190, 130, 0.4)');
+      sunDisk.addColorStop(1, 'rgba(235, 190, 130, 0)');
+      ctx.fillStyle = sunDisk;
+      ctx.fillRect(100, 0, 360, 260);
+
+      // Warm Travertine Ground Bounce
+      const groundBounce = ctx.createLinearGradient(0, 380, 0, 512);
+      groundBounce.addColorStop(0, 'rgba(214, 194, 168, 0)');
+      groundBounce.addColorStop(1, 'rgba(214, 194, 168, 0.45)');
+      ctx.fillStyle = groundBounce;
+      ctx.fillRect(0, 380, 1024, 132);
+
+      const texture = new THREE.CanvasTexture(c);
+      texture.mapping = THREE.EquirectangularReflectionMapping;
+      const envMap = pmrem.fromEquirectangular(texture).texture;
+      texture.dispose();
+      pmrem.dispose();
+      return envMap;
+    }
+
+    const alpineEnv = createAlpineStudioEnvironment(renderer);
+    scene.environment = alpineEnv;
+
+    // PROCEDURAL POROUS ROMAN TRAVERTINE STONE TEXTURE
+    function createTravertineTexture() {
+      const c = document.createElement('canvas');
+      c.width = 1024;
+      c.height = 1024;
+      const ctx = c.getContext('2d');
+
+      // Warm creamy limestone base
+      ctx.fillStyle = '#e5dfd3';
+      ctx.fillRect(0, 0, 1024, 1024);
+
+      // Horizontal Sedimentary Stratification Bands
+      for (let y = 0; y < 1024; y += 4) {
+        const bandAlpha = (Math.sin(y * 0.05) * 0.5 + 0.5) * 0.12;
+        ctx.fillStyle = y % 8 === 0 ? `rgba(196, 185, 168, ${bandAlpha})` : `rgba(240, 235, 225, ${bandAlpha * 0.8})`;
+        ctx.fillRect(0, y, 1024, 4);
+      }
+
+      // Porous Pits and Micro-Cavities
+      ctx.fillStyle = 'rgba(120, 108, 92, 0.22)';
+      for (let p = 0; p < 800; p++) {
+        const px = Math.random() * 1024;
+        const py = Math.random() * 1024;
+        const rw = 4 + Math.random() * 14;
+        const rh = 1.5 + Math.random() * 4;
+        ctx.beginPath();
+        ctx.ellipse(px, py, rw, rh, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      const tex = new THREE.CanvasTexture(c);
+      tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+      tex.repeat.set(2, 2);
+      return tex;
+    }
+    const travertineTex = createTravertineTexture();
+
+    // PROCEDURAL WATER SURFACE RIPPLE NORMAL MAP
+    function createWaterNormalMap() {
+      const c = document.createElement('canvas');
+      c.width = 512;
+      c.height = 512;
+      const ctx = c.getContext('2d');
+      const imgData = ctx.createImageData(512, 512);
+      const data = imgData.data;
+
+      for (let y = 0; y < 512; y++) {
+        for (let x = 0; x < 512; x++) {
+          const idx = (y * 512 + x) * 4;
+          const waveX = Math.sin(x * 0.08) * Math.cos(y * 0.04) * 0.5;
+          const waveY = Math.cos(x * 0.05) * Math.sin(y * 0.08) * 0.5;
+          data[idx] = 128 + Math.floor(waveX * 45);
+          data[idx + 1] = 128 + Math.floor(waveY * 45);
+          data[idx + 2] = 255;
+          data[idx + 3] = 255;
+        }
+      }
+      ctx.putImageData(imgData, 0, 0);
+      const tex = new THREE.CanvasTexture(c);
+      tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+      tex.repeat.set(3, 3);
+      return tex;
+    }
+    const waterNormal = createWaterNormalMap();
+
+    // Sun Directional Light (Simulated Solar Movement with High-Res PCF Shadows)
+    const sunLight = new THREE.DirectionalLight(0xfff7ea, 2.6);
+    sunLight.position.set(6, 8, 4);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.width = 2048;
+    sunLight.shadow.mapSize.height = 2048;
+    sunLight.shadow.camera.near = 0.5;
+    sunLight.shadow.camera.far = 30;
+    sunLight.shadow.camera.left = -6;
+    sunLight.shadow.camera.right = 6;
+    sunLight.shadow.camera.top = 6;
+    sunLight.shadow.camera.bottom = -6;
+    sunLight.shadow.bias = -0.0002;
+    sunLight.shadow.radius = 3.5;
+    scene.add(sunLight);
+
+    const ambientLight = new THREE.AmbientLight(0xd9d4c5, 0.6);
+    scene.add(ambientLight);
+
+    // =========================================================================
+    // PHOTOREALISTIC ARCHITECTURAL PBR MATERIALS
+    // =========================================================================
+    const travertineMat = new THREE.MeshStandardMaterial({
+      map: travertineTex,
+      roughness: 0.72,
+      metalness: 0.02,
+      envMapIntensity: 1.1
+    });
+
+    const concreteMat = new THREE.MeshStandardMaterial({
+      color: 0x928d84,
+      roughness: 0.88,
+      metalness: 0.08,
+      envMapIntensity: 0.9
+    });
+
+    const architecturalGlassMat = new THREE.MeshPhysicalMaterial({
+      color: 0xffffff,
+      transmission: 0.95,
+      transparent: true,
+      opacity: 0.9,
+      roughness: 0.03,
+      ior: 1.52,
+      thickness: 0.4,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.02,
+      reflectivity: 0.95,
+      envMapIntensity: 1.8
+    });
+
+    const poolWaterMat = new THREE.MeshPhysicalMaterial({
+      color: 0x24343d,
+      transmission: 0.7,
+      transparent: true,
+      roughness: 0.05,
+      ior: 1.33,
+      normalMap: waterNormal,
+      normalScale: new THREE.Vector2(0.25, 0.25),
+      envMapIntensity: 2.2
+    });
+
+    // Pavilion Geometry Assembly
+    const pavilionGroup = new THREE.Group();
+    scene.add(pavilionGroup);
+
+    // 1. Plinth / Ground Terrace
+    const plinthGeo = new THREE.BoxGeometry(6, 0.2, 5);
+    const plinth = new THREE.Mesh(plinthGeo, travertineMat);
+    plinth.receiveShadow = true;
+    pavilionGroup.add(plinth);
+
+    // 2. Reflection Pool
+    const poolGeo = new THREE.BoxGeometry(2.4, 0.05, 3.8);
+    const pool = new THREE.Mesh(poolGeo, poolWaterMat);
+    pool.position.set(1.4, 0.1, 0);
+    pool.receiveShadow = true;
+    pavilionGroup.add(pool);
+
+    // 3. Monolithic Concrete Spine Wall
+    const spineGeo = new THREE.BoxGeometry(0.3, 2.2, 4.2);
+    const spine = new THREE.Mesh(spineGeo, concreteMat);
+    spine.position.set(-1.2, 1.1, 0);
+    spine.castShadow = true;
+    spine.receiveShadow = true;
+    pavilionGroup.add(spine);
+
+    // 4. Cantilevered Roof Slab
+    const roofGeo = new THREE.BoxGeometry(4.8, 0.18, 3.8);
+    const roof = new THREE.Mesh(roofGeo, travertineMat);
+    roof.position.set(0.4, 2.2, 0);
+    roof.castShadow = true;
+    pavilionGroup.add(roof);
+
+    // 5. Minimalist Slender Steel Columns
+    const colMat = new THREE.MeshStandardMaterial({ color: 0x1f2023, metalness: 0.8 });
+    for (let i of [-1.2, 1.2]) {
+      const colGeo = new THREE.CylinderGeometry(0.04, 0.04, 2.1, 16);
+      const col = new THREE.Mesh(colGeo, colMat);
+      col.position.set(2.4, 1.05, i);
+      col.castShadow = true;
+      pavilionGroup.add(col);
+    }
+
+    // 6. Glass Curtain Wall
+    const glassGeo = new THREE.BoxGeometry(0.04, 2.1, 3.6);
+    const glass = new THREE.Mesh(glassGeo, architecturalGlassMat);
+    glass.position.set(0.2, 1.05, 0);
+    pavilionGroup.add(glass);
+
+    // Warm Teak Acoustic Ceiling Louvers under the cantilevered roof
+    const teakMat = new THREE.MeshStandardMaterial({
+      color: 0x5c4033,
+      roughness: 0.65,
+      metalness: 0.05
+    });
+    for (let s = -1.6; s <= 1.6; s += 0.25) {
+      const slat = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.04, 0.12), teakMat);
+      slat.position.set(0.4, 2.08, s);
+      slat.castShadow = true;
+      pavilionGroup.add(slat);
+    }
+
+    camera.lookAt(0, 1, 0);
+
+    // Solar Path Simulation
+    function updateSunAngle(deg) {
+      const rad = (deg * Math.PI) / 180;
+      const radius = 9;
+      const x = Math.sin(rad) * radius;
+      const z = Math.cos(rad) * radius;
+      const y = Math.max(Math.sin(rad * 0.5) * 8, 2.5);
+
+      sunLight.position.set(x, y, z);
+      const elev = Math.round((y / radius) * 60);
+      hudSolarAngle.textContent = `AZIMUTH: ${deg}° | ELEVATION: ${elev}°`;
+
+      // Estimate time
+      const hours = Math.floor(6 + (deg / 360) * 14);
+      const mins = Math.floor(((deg % 25) / 25) * 60);
+      solarTimeLabel.textContent = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')} CET`;
+    }
+
+    solarSlider.addEventListener('input', (e) => {
+      updateSunAngle(parseInt(e.target.value));
+    });
+
+    // Interactive Drag Orbit
+    let isDragging = false;
+    let prevMouseX = 0, prevMouseY = 0;
+    let targetRotY = 0;
+
+    stage.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      prevMouseX = e.clientX;
+      prevMouseY = e.clientY;
+    });
+
+    window.addEventListener('mouseup', () => { isDragging = false; });
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      const dx = e.clientX - prevMouseX;
+      prevMouseX = e.clientX;
+      targetRotY += dx * 0.006;
+    });
+
+    function render(time) {
+      const t = time * 0.001;
+
+      // Water Ripple UV animation
+      waterNormal.offset.x = t * 0.015;
+      waterNormal.offset.y = t * 0.02;
+
+      if (!isDragging) {
+        targetRotY += 0.0015;
+      }
+      pavilionGroup.rotation.y += (targetRotY - pavilionGroup.rotation.y) * 0.08;
+
+      renderer.render(scene, camera);
+      requestAnimationFrame(render);
+    }
+    requestAnimationFrame(render);
+
+    // Menu Switcher & Cursor
+    const atelierBtn = document.getElementById('atelierBtn');
+    const atelierMenu = document.getElementById('atelierMenu');
+    atelierBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      atelierMenu.classList.toggle('active');
+    });
+    window.addEventListener('click', () => { atelierMenu.classList.remove('active'); });
+
+    const cursorRing = document.getElementById('cursorRing');
+    const cursorDot = document.getElementById('cursorDot');
+    let mX = -100, mY = -100, rX = -100, rY = -100;
+    window.addEventListener('mousemove', (e) => {
+      mX = e.clientX;
+      mY = e.clientY;
+      cursorDot.style.transform = `translate(${mX}px, ${mY}px)`;
+    });
+    function cursorLoop() {
+      rX += (mX - rX) * 0.18;
+      rY += (mY - rY) * 0.18;
+      cursorRing.style.transform = `translate(${rX}px, ${rY}px)`;
+      requestAnimationFrame(cursorLoop);
+    }
+    requestAnimationFrame(cursorLoop);
+  </script>
+<div class="study-credit" style="position:fixed;left:12px;bottom:10px;z-index:99999;max-width:calc(100vw - 24px);padding:5px 10px;font:500 11px/1.3 system-ui,sans-serif;letter-spacing:.02em;color:#e8e8e8;background:rgba(0,0,0,.72);border:1px solid rgba(255,255,255,.18);border-radius:4px;pointer-events:none">Study build, design credit: Alex Carter / BoostStash</div>
+</body>
+</html>
