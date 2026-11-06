@@ -14,7 +14,7 @@ Three.js scenes, scroll-driven camera work, and the boring-but-important parts: 
 
 Sites I built for local businesses (work in progress) are in [concept-sites](https://github.com/mikachamp/concept-sites).
 
-The animation lab and the design studies load Three.js r128 from a CDN, so they need an internet connection. Gyro Winder Live is the one built to run fully offline (below).
+The animation lab and the design studies load Three.js r128 from a CDN, so they need an internet connection. Gyro Winder Live is the one built as a single self-contained file (below).
 
 ## Design studies
 
@@ -32,7 +32,7 @@ They load Three.js r128 from a CDN, so they need internet.
 ## Techniques
 
 ### Build so it opens from `file://`
-Gyro Winder Live is a Vite 5 + TypeScript project with `three@0.169.0` from npm. With `base: './'` and `vite-plugin-singlefile`, `npm run build` produces **one self-contained `dist/index.html`** (about 553 kB). Send the file to someone and it works: no server, no CDN. Checked from `file://` with the network blocked, 0 errors.
+Gyro Winder Live is a Vite 5 + TypeScript project with `three@0.169.0` from npm. With `base: './'` and `vite-plugin-singlefile`, `npm run build` produces **one self-contained `dist/index.html`** (about 553 kB). Send the file to someone and it works: no server. The only outside request is an optional Google Fonts link that falls back to system fonts offline. Opened from `file://` with 0 console errors.
 
 ### Live 3D that is not a video
 Every part is generated from code, in real millimetres, in a small studio scene lit by a baked environment. The scroll drives a list of camera cues, framed by *size* ("fit 52 mm on screen") so a phone and a monitor get the same shot. One clock drives every moving part. Post chain: MSAA HDR, bloom, ACES tone mapping, grain.
